@@ -19,5 +19,9 @@
     "test": "vitest run",
     "lint": "eslint .",
     "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "@dpg/bpmn-js-adapter": "*",
+    "@dpg/components": "file:/Users/francav/.dpg-local-deps/dpg-components-0.1.0-dc0197f.tgz"
   }
 }

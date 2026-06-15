@@ -19,5 +19,19 @@
     "test": "vitest run",
     "lint": "eslint .",
     "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "@dpg/components": "file:/Users/francav/.dpg-local-deps/dpg-components-0.1.0-dc0197f.tgz"
+  },
+  "peerDependencies": {
+    "bpmn-js": ">=11"
+  },
+  "peerDependenciesMeta": {
+    "bpmn-js": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "bpmn-js": "^18"
   }
 }

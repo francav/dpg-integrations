@@ -21,6 +21,7 @@
     "@types/node": "^20",
     "eslint": "^9",
     "globals": "^16",
+    "jsdom": "^27.0.1",
     "prettier": "^3",
     "typescript": "^5.9",
     "typescript-eslint": "^8",

@@ -1,0 +1,9 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/bpmn-js-adapter" },
+    { "path": "packages/camunda-plugin" },
+    { "path": "packages/modeler" },
+    { "path": "packages/starter" }
+  ]
+}

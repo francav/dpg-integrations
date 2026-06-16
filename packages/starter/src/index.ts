@@ -2,7 +2,22 @@
 // Copyright 2026 Victor França
 
 /**
- * Placeholder export proving the dpg-starter toolchain builds.
- * Replaced with real exports in a later work unit.
+ * dpg-starter — a lean template for building a DPG governance integration.
+ *
+ * Two variants share one framework-neutral core:
+ *  - headless ({@link ./headless}) — compiler result → view-model → text report,
+ *    runnable anywhere Node runs (see `src/cli.ts` / `npm start`); and
+ *  - canvas ({@link ./canvas}) — the same view-model rendered as L3 panels plus
+ *    bpmn-js overlays in the browser.
+ *
+ * Both consume `@dpg/components`' `mapCompilerResult`; the canvas variant adds
+ * `@dpg/bpmn-js-adapter`. Copy this package, swap in your own compiler output and
+ * BPMN, and you have a working integration. See QUICKSTART.md.
  */
-export const greet = (name: string): string => `Hello ${name} from dpg-starter`;
+
+export { analyze, renderReport, reportFromCompilerResult } from "./headless.js";
+
+export { mountCanvas, STARTER_PANEL_TAGS } from "./canvas.js";
+export type { MountedCanvas, MountCanvasOptions, StarterPanelTag } from "./canvas.js";
+
+export { SAMPLE_COMPILER_RESULT, SAMPLE_BPMN, SAMPLE_ELEMENT_IDS } from "./sample.js";

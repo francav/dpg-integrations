@@ -2,59 +2,51 @@
 // Copyright 2026 Victor França
 
 /**
- * {@link DpgPanelHost} — mounts the DPG governance UI for a single diagram.
+ * {@link DpgPanelHost} — mounts the DPG governance UI for a single diagram
+ * (viewer-only: static mount, no editor, no re-classify).
  *
- * It is the thin glue the plugin needs and nothing more:
- *  - registers the L3 custom elements (`@francav/components`) once,
- *  - mounts the governance matrix, findings, badge and profile/policy selector
- *    panels into a host container,
- *  - binds the same {@link AnalysisResult} onto the bpmn-js canvas via
- *    `@francav/bpmn-js-adapter`, and
- *  - seeds the profile/policy selector from the Camunda defaults.
+ * It is the thin glue the plugin needs and nothing more. It builds on
+ * `@francav/components`' shared {@link mountGovernancePanels} helper so it renders
+ * the SAME flat panel set as the reference modeler — resolving the historical
+ * 3-vs-4 contradiction (the standalone profile/policy selector is dropped for
+ * now and returns inside the consolidated inspector in F.3c). The helper owns
+ * element registration, the panel set, the one-time stylesheet injection, and
+ * the delegated `dpg-element-select` listener. This host additionally:
+ *  - constructs the canvas {@link DpgCanvasBinding} (paint) and
+ *    {@link DpgCanvasSelection} (panel→canvas focus), and
+ *  - hands the adapter's overlay CSS to the helper as a string, so
+ *    `@francav/components` keeps no dependency on `@francav/bpmn-js-adapter`.
  *
  * No governance logic lives here: the {@link AnalysisResult} is produced
- * upstream (by `@francav/components`' `mapCompilerResult`) and handed in.
+ * upstream (by `@francav/components`' `mapCompilerResult`) and handed in. The
+ * shipping client plugin uses `dpg-modeler`'s `startReferenceModeler` for the
+ * LIVE editing path; this host is the viewer-only counterpart, and both now
+ * mount the identical panel set via the one helper.
  */
 
-import { DpgCanvasBinding, dpgStylesheet } from "@francav/bpmn-js-adapter";
+import { DpgCanvasBinding, DpgCanvasSelection, dpgStylesheet } from "@francav/bpmn-js-adapter";
 import type { DiagramServices } from "@francav/bpmn-js-adapter";
-import { defineDpgElements } from "@francav/components";
-import type { AnalysisResult, SelectorOption } from "@francav/components";
-import { DEFAULT_POLICY_ID, DEFAULT_PROFILE_ID, PLUGIN_ID } from "./manifest.js";
-
-/** The L3 panel tag names this host mounts, in display order. */
-export const PANEL_TAGS = [
-  "dpg-determinism-badge",
-  "dpg-governance-matrix",
-  "dpg-findings-panel",
-  "dpg-profile-policy-selector",
-] as const;
-
-export type PanelTag = (typeof PANEL_TAGS)[number];
-
-const STYLE_ELEMENT_ID = `${PLUGIN_ID}-style`;
+import { mountGovernancePanels } from "@francav/components";
+import type { AnalysisResult, GovernancePanelsHandle } from "@francav/components";
 
 export interface PanelHostOptions {
-  /** Available runtime profiles to offer in the selector. */
-  profiles?: SelectorOption[];
-  /** Available governance policies to offer in the selector. */
-  policies?: SelectorOption[];
-  /** Override the default selected profile (defaults to the Camunda profile). */
-  selectedProfile?: string;
-  /** Override the default selected policy. */
-  selectedPolicy?: string;
   /**
-   * Document the host injects the adapter stylesheet into. Defaults to the
-   * panel container's owner document. Pass `null` to skip stylesheet injection
-   * (e.g. when the host already provides the marker CSS).
+   * Called when the (future inspector) profile selector changes. Defined now
+   * for parity with the helper; unused in the flat layout, which has no
+   * selector. Ready for F.3c.
    */
-  styleTarget?: Document | null;
+  onProfileChange?: (id: string) => void;
+  /** Called when the (future inspector) policy selector changes. See above. */
+  onPolicyChange?: (id: string) => void;
 }
 
 /** A mounted panel and the canvas binding it drives, for teardown/refresh. */
 export interface MountedPanels {
-  readonly elements: Record<PanelTag, HTMLElement>;
+  /** The shared governance-panels handle (panel set + delegated events). */
+  readonly panels: GovernancePanelsHandle;
   readonly binding: DpgCanvasBinding;
+  /** The canvas selection seam (panel→canvas focus). */
+  readonly selection: DpgCanvasSelection;
   /** Re-render every panel and re-paint the canvas with a new result. */
   update(result: AnalysisResult): void;
   /** Detach the panels, remove canvas decorations, and drop the stylesheet. */
@@ -63,8 +55,8 @@ export interface MountedPanels {
 
 /**
  * Mount the governance panels into `container` and bind `result` onto the
- * `diagram` canvas. The default profile/policy selection is the Camunda
- * profile (`camunda-7`) at the tier-2 baseline unless overridden.
+ * `diagram` canvas. Viewer-only: a static snapshot of one analysis, with
+ * panel→canvas selection sync but no re-classification.
  */
 export class DpgPanelHost {
   private readonly container: HTMLElement;
@@ -76,74 +68,33 @@ export class DpgPanelHost {
   }
 
   mount(result: AnalysisResult, options: PanelHostOptions = {}): MountedPanels {
-    defineDpgElements();
-
-    const ownerDoc = this.container.ownerDocument;
-    const styleTarget = options.styleTarget === undefined ? ownerDoc : options.styleTarget;
-    if (styleTarget) injectStylesheet(styleTarget);
-
-    const elements = this.createElements(ownerDoc);
-    this.applyResult(elements, result, options);
-
     const binding = new DpgCanvasBinding(this.diagram);
+    const selection = new DpgCanvasSelection(this.diagram);
+
+    const panels = mountGovernancePanels(this.container, {
+      stylesheet: dpgStylesheet(),
+      onElementSelect: (id) => {
+        selection.focusElement(id);
+        panels.setSelectedElement(id);
+      },
+      onProfileChange: options.onProfileChange,
+      onPolicyChange: options.onPolicyChange,
+    });
+    panels.update(result);
     binding.apply(result);
 
     return {
-      elements,
+      panels,
       binding,
+      selection,
       update: (next: AnalysisResult): void => {
-        this.applyResult(elements, next, options);
+        panels.update(next);
         binding.apply(next);
       },
       destroy: (): void => {
         binding.clear();
-        for (const el of Object.values(elements)) el.remove();
-        if (styleTarget) {
-          styleTarget.getElementById(STYLE_ELEMENT_ID)?.remove();
-        }
+        panels.destroy();
       },
     };
   }
-
-  private createElements(doc: Document): Record<PanelTag, HTMLElement> {
-    const entries = PANEL_TAGS.map((tag): [PanelTag, HTMLElement] => {
-      const el = doc.createElement(tag);
-      this.container.appendChild(el);
-      return [tag, el];
-    });
-    return Object.fromEntries(entries) as Record<PanelTag, HTMLElement>;
-  }
-
-  private applyResult(
-    elements: Record<PanelTag, HTMLElement>,
-    result: AnalysisResult,
-    options: PanelHostOptions,
-  ): void {
-    // The L3 elements render off a `result` property; the selector additionally
-    // takes profile/policy options + a default selection (Camunda profile).
-    for (const tag of PANEL_TAGS) {
-      const el = elements[tag] as HTMLElement & { result?: AnalysisResult };
-      el.result = result;
-    }
-
-    const selector = elements["dpg-profile-policy-selector"] as HTMLElement & {
-      profiles?: SelectorOption[];
-      policies?: SelectorOption[];
-      selectedProfile?: string | null;
-      selectedPolicy?: string | null;
-    };
-    if (options.profiles) selector.profiles = options.profiles;
-    if (options.policies) selector.policies = options.policies;
-    selector.selectedProfile = options.selectedProfile ?? DEFAULT_PROFILE_ID;
-    selector.selectedPolicy = options.selectedPolicy ?? DEFAULT_POLICY_ID;
-  }
-}
-
-/** Inject the adapter's Axis-Y ring + decoration stylesheet once per document. */
-function injectStylesheet(target: Document): void {
-  if (target.getElementById(STYLE_ELEMENT_ID)) return;
-  const style = target.createElement("style");
-  style.id = STYLE_ELEMENT_ID;
-  style.textContent = dpgStylesheet();
-  (target.head ?? target.documentElement).appendChild(style);
 }

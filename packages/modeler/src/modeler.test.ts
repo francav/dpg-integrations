@@ -15,7 +15,8 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { axisYMarkerClass } from "@francav/bpmn-js-adapter";
 import type { AnalysisResult } from "@francav/components";
-import { startReferenceModeler, MODELER_PANEL_TAGS } from "./modeler.js";
+import { FLAT_PANEL_TAGS } from "@francav/components";
+import { startReferenceModeler } from "./modeler.js";
 import { SAMPLE_BPMN, sampleClassifier } from "./sample.js";
 import { FakeEditor } from "../test/fake-editor.js";
 
@@ -45,9 +46,12 @@ describe("DpgReferenceModeler", () => {
     const session = startReferenceModeler(editor, container, sampleClassifier, { debounceMs: 0 });
     await session.reclassify();
 
-    for (const tag of MODELER_PANEL_TAGS) {
+    // The session mounts the shared flat panel set via the helper.
+    for (const tag of FLAT_PANEL_TAGS) {
       expect(container.querySelector(tag)).toBeTruthy();
     }
+    // The helper's handle is exposed on the session.
+    expect(session.panels.container).toBe(container);
     expect(session.result).not.toBeNull();
     expect(session.result!.process.id).toBe("Process_LoanDecision");
 
@@ -140,9 +144,9 @@ describe("DpgReferenceModeler", () => {
 
     session.destroy();
     expect(editor.listenerCount("commandStack.changed")).toBe(0);
-    // Panels and stylesheet are torn down.
+    // Panels and stylesheet (owned by the helper) are torn down.
     expect(container.querySelector("dpg-governance-matrix")).toBeNull();
-    expect(document.getElementById("dpg-reference-modeler-style")).toBeNull();
+    expect(document.getElementById("dpg-governance-panels-style")).toBeNull();
   });
 
   it("reports classification errors instead of throwing", async () => {

@@ -9,7 +9,10 @@
  * injectable {@link Classifier}, it lets a user *edit* a process and keeps the
  * governance view live:
  *  - it mounts the L3 governance panels (determinism badge, matrix, findings)
- *    beside the canvas via `@francav/components`,
+ *    beside the canvas via `@francav/components`' shared
+ *    {@link mountGovernancePanels} helper (which owns element registration, the
+ *    panel set, the one-time stylesheet injection, and the delegated
+ *    `dpg-element-select` listener),
  *  - it subscribes to the editor's change events, and on each edit it exports
  *    the current XML, classifies it, maps the result onto the
  *    {@link AnalysisResult} view-model, and re-paints both the panels and the
@@ -23,19 +26,14 @@
  */
 
 import { DpgCanvasBinding, DpgCanvasSelection, dpgStylesheet } from "@francav/bpmn-js-adapter";
-import { defineDpgElements, mapCompilerResult } from "@francav/components";
-import type { AnalysisResult, DiagramElementIndex, ElementSelectDetail } from "@francav/components";
+import { mapCompilerResult, mountGovernancePanels } from "@francav/components";
+import type {
+  AnalysisResult,
+  DiagramElementIndex,
+  GovernancePanelsHandle,
+} from "@francav/components";
 import type { Classifier } from "./classify.js";
 import type { DiagramEvent, EditorServices, EventBusService } from "./editor.js";
-
-/** The governance panel tags the reference modeler mounts, in display order. */
-export const MODELER_PANEL_TAGS = [
-  "dpg-determinism-badge",
-  "dpg-governance-matrix",
-  "dpg-findings-panel",
-] as const;
-
-export type ModelerPanelTag = (typeof MODELER_PANEL_TAGS)[number];
 
 /**
  * diagram-js editor events that signify the model changed. bpmn-js fires
@@ -43,16 +41,6 @@ export type ModelerPanelTag = (typeof MODELER_PANEL_TAGS)[number];
  * on shape/property mutations; either is a reliable "re-classify now" trigger.
  */
 export const DEFAULT_CHANGE_EVENTS = ["commandStack.changed", "elements.changed"] as const;
-
-const STYLE_ELEMENT_ID = "dpg-reference-modeler-style";
-
-/**
- * The bubbling, composed event the L3 governance panels (matrix, findings)
- * dispatch when the user clicks an element-bound dot/finding. The modeler
- * listens for it once on the panel container (event delegation) and focuses the
- * named element on the canvas.
- */
-const ELEMENT_SELECT_EVENT = "dpg-element-select";
 
 export interface ReferenceModelerOptions {
   /**
@@ -66,12 +54,6 @@ export interface ReferenceModelerOptions {
    * event (used by tests).
    */
   debounceMs?: number;
-  /**
-   * Document the modeler injects the adapter stylesheet into. Defaults to the
-   * panel container's owner document. Pass `null` to skip injection (e.g. when
-   * the host already provides the marker CSS).
-   */
-  styleTarget?: Document | null;
   /** Called after each successful (re)classification, with the new view-model. */
   onClassified?: (result: AnalysisResult) => void;
   /** Called when a classification throws (e.g. invalid XML mid-edit). */
@@ -80,12 +62,17 @@ export interface ReferenceModelerOptions {
 
 /** A live reference-modeler session: panels, binding, and lifecycle. */
 export interface ReferenceModelerSession {
-  readonly elements: Record<ModelerPanelTag, HTMLElement>;
+  /**
+   * The shared governance-panels handle. The helper already wires the delegated
+   * `dpg-element-select` listener to canvas focus; this is exposed for hosts
+   * that want to drive the panels directly (e.g. `update`/`setSelectedElement`).
+   */
+  readonly panels: GovernancePanelsHandle;
   readonly binding: DpgCanvasBinding;
   /**
-   * The canvas selection seam. A delegated listener already wires panel
-   * `dpg-element-select` events to {@link DpgCanvasSelection.focusElement}; this
-   * is exposed for hosts that want to drive selection programmatically.
+   * The canvas selection seam. The helper's `onElementSelect` callback already
+   * routes panel selections to {@link DpgCanvasSelection.focusElement}; this is
+   * exposed for hosts that want to drive selection programmatically.
    */
   readonly selection: DpgCanvasSelection;
   /** The latest classification, or `null` before the first one completes. */
@@ -117,25 +104,19 @@ export class DpgReferenceModeler {
     const changeEvents = options.changeEvents ?? DEFAULT_CHANGE_EVENTS;
     const debounceMs = options.debounceMs ?? 150;
 
-    defineDpgElements();
-
-    const ownerDoc = this.container.ownerDocument;
-    const styleTarget = options.styleTarget === undefined ? ownerDoc : options.styleTarget;
-    if (styleTarget) injectStylesheet(styleTarget);
-
-    const elements = this.createElements(ownerDoc);
     const binding = new DpgCanvasBinding(this.editor);
     const selection = new DpgCanvasSelection(this.editor);
 
-    // Panel → canvas: one delegated listener on the panel container catches the
-    // bubbling, composed `dpg-element-select` from any L3 panel (matrix or
-    // findings) and focuses (selects + pans to) the named element on the canvas.
-    const onElementSelect = (event: Event): void => {
-      const detail = (event as CustomEvent<ElementSelectDetail>).detail;
-      const elementId = detail?.elementId;
-      if (elementId) selection.focusElement(elementId);
-    };
-    this.container.addEventListener(ELEMENT_SELECT_EVENT, onElementSelect);
+    // The helper owns element registration, the flat panel set, the one-time
+    // stylesheet injection, and the single delegated `dpg-element-select`
+    // listener. Panel → canvas: focus the named element and inform the panels.
+    const panels = mountGovernancePanels(this.container, {
+      stylesheet: dpgStylesheet(),
+      onElementSelect: (id) => {
+        selection.focusElement(id);
+        panels.setSelectedElement(id);
+      },
+    });
 
     let latest: AnalysisResult | null = null;
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -143,9 +124,7 @@ export class DpgReferenceModeler {
 
     const render = (result: AnalysisResult): void => {
       latest = result;
-      for (const tag of MODELER_PANEL_TAGS) {
-        (elements[tag] as HTMLElement & { result?: AnalysisResult }).result = result;
-      }
+      panels.update(result);
       binding.apply(result);
     };
 
@@ -182,7 +161,7 @@ export class DpgReferenceModeler {
     void runClassification();
 
     return {
-      elements,
+      panels,
       binding,
       selection,
       get result(): AnalysisResult | null {
@@ -199,21 +178,10 @@ export class DpgReferenceModeler {
         destroyed = true;
         if (timer) clearTimeout(timer);
         unsubscribe(eventBus, changeEvents, onChange);
-        this.container.removeEventListener(ELEMENT_SELECT_EVENT, onElementSelect);
         binding.clear();
-        for (const el of Object.values(elements)) el.remove();
-        if (styleTarget) styleTarget.getElementById(STYLE_ELEMENT_ID)?.remove();
+        panels.destroy();
       },
     };
-  }
-
-  private createElements(doc: Document): Record<ModelerPanelTag, HTMLElement> {
-    const entries = MODELER_PANEL_TAGS.map((tag): [ModelerPanelTag, HTMLElement] => {
-      const el = doc.createElement(tag);
-      this.container.appendChild(el);
-      return [tag, el];
-    });
-    return Object.fromEntries(entries) as Record<ModelerPanelTag, HTMLElement>;
   }
 }
 
@@ -264,13 +232,4 @@ function unsubscribe(
   cb: (event: DiagramEvent) => void,
 ): void {
   for (const event of events) bus.off(event, cb);
-}
-
-/** Inject the adapter's Axis-Y ring + decoration stylesheet once per document. */
-function injectStylesheet(target: Document): void {
-  if (target.getElementById(STYLE_ELEMENT_ID)) return;
-  const style = target.createElement("style");
-  style.id = STYLE_ELEMENT_ID;
-  style.textContent = dpgStylesheet();
-  (target.head ?? target.documentElement).appendChild(style);
 }

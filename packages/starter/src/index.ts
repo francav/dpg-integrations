@@ -17,7 +17,7 @@
 
 export { analyze, renderReport, reportFromCompilerResult } from "./headless.js";
 
-export { mountCanvas, STARTER_PANEL_TAGS } from "./canvas.js";
-export type { MountedCanvas, MountCanvasOptions, StarterPanelTag } from "./canvas.js";
+export { mountCanvas } from "./canvas.js";
+export type { MountedCanvas, MountCanvasOptions } from "./canvas.js";
 
 export { SAMPLE_COMPILER_RESULT, SAMPLE_BPMN, SAMPLE_ELEMENT_IDS } from "./sample.js";

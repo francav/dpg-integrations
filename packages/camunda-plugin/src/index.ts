@@ -44,5 +44,5 @@ export type {
   RegistrationReport,
 } from "./registration.js";
 
-export { DpgPanelHost, PANEL_TAGS } from "./panel-host.js";
-export type { PanelTag, PanelHostOptions, MountedPanels } from "./panel-host.js";
+export { DpgPanelHost } from "./panel-host.js";
+export type { PanelHostOptions, MountedPanels } from "./panel-host.js";

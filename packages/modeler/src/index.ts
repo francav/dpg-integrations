@@ -33,17 +33,8 @@
  * ```
  */
 
-export {
-  DpgReferenceModeler,
-  startReferenceModeler,
-  MODELER_PANEL_TAGS,
-  DEFAULT_CHANGE_EVENTS,
-} from "./modeler.js";
-export type {
-  ReferenceModelerOptions,
-  ReferenceModelerSession,
-  ModelerPanelTag,
-} from "./modeler.js";
+export { DpgReferenceModeler, startReferenceModeler, DEFAULT_CHANGE_EVENTS } from "./modeler.js";
+export type { ReferenceModelerOptions, ReferenceModelerSession } from "./modeler.js";
 
 export type { Classifier } from "./classify.js";
 

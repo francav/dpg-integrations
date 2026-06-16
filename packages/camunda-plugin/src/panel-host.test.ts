@@ -5,9 +5,11 @@
 
 import { afterEach, describe, expect, it } from "vitest";
 import { axisYMarkerClass } from "@francav/bpmn-js-adapter";
-import { DpgPanelHost, PANEL_TAGS } from "./panel-host.js";
-import { DEFAULT_POLICY_ID, DEFAULT_PROFILE_ID, PLUGIN_ID } from "./manifest.js";
+import { FLAT_PANEL_TAGS } from "@francav/components";
+import { DpgPanelHost } from "./panel-host.js";
 import { FakeDiagram, GATEWAY_ID, SAMPLE_ANALYSIS, TASK_ID } from "../test/fixtures.js";
+
+const STYLE_ID = "dpg-governance-panels-style";
 
 function mountFresh() {
   const container = document.createElement("div");
@@ -22,48 +24,27 @@ afterEach(() => {
 });
 
 describe("DpgPanelHost", () => {
-  it("mounts every L3 panel into the container", () => {
+  it("delegates to the shared helper and mounts the flat panel set", () => {
     const { container, host } = mountFresh();
     const mounted = host.mount(SAMPLE_ANALYSIS);
 
-    for (const tag of PANEL_TAGS) {
+    // Same flat set as the modeler path (badge + matrix + findings) — and no
+    // standalone selector (it returns inside the inspector in F.3c).
+    for (const tag of FLAT_PANEL_TAGS) {
       expect(container.querySelector(tag)).toBeTruthy();
-      expect(mounted.elements[tag]).toBeInstanceOf(HTMLElement);
     }
+    expect(container.querySelector("dpg-profile-policy-selector")).toBeNull();
+    // The helper handle is exposed on the mounted result.
+    expect(mounted.panels.container).toBe(container);
   });
 
   it("feeds the analysis result into the rendered panels", () => {
-    const { host } = mountFresh();
-    const mounted = host.mount(SAMPLE_ANALYSIS);
-    const matrix = mounted.elements["dpg-governance-matrix"] as HTMLElement & {
+    const { container, host } = mountFresh();
+    host.mount(SAMPLE_ANALYSIS);
+    const matrix = container.querySelector("dpg-governance-matrix") as HTMLElement & {
       result?: unknown;
     };
     expect(matrix.result).toBe(SAMPLE_ANALYSIS);
-  });
-
-  it("defaults the selector to the Camunda profile and tier-2 policy", () => {
-    const { host } = mountFresh();
-    const mounted = host.mount(SAMPLE_ANALYSIS);
-    const selector = mounted.elements["dpg-profile-policy-selector"] as HTMLElement & {
-      selectedProfile?: string | null;
-      selectedPolicy?: string | null;
-    };
-    expect(selector.selectedProfile).toBe(DEFAULT_PROFILE_ID);
-    expect(selector.selectedPolicy).toBe(DEFAULT_POLICY_ID);
-  });
-
-  it("honors an explicit profile/policy override", () => {
-    const { host } = mountFresh();
-    const mounted = host.mount(SAMPLE_ANALYSIS, {
-      selectedProfile: "camunda-8",
-      selectedPolicy: "baseline-tier-1",
-    });
-    const selector = mounted.elements["dpg-profile-policy-selector"] as HTMLElement & {
-      selectedProfile?: string | null;
-      selectedPolicy?: string | null;
-    };
-    expect(selector.selectedProfile).toBe("camunda-8");
-    expect(selector.selectedPolicy).toBe("baseline-tier-1");
   });
 
   it("paints determinism markers onto the canvas via the adapter", () => {
@@ -74,10 +55,10 @@ describe("DpgPanelHost", () => {
     expect(diagram.overlaysList.length).toBeGreaterThan(0);
   });
 
-  it("injects the adapter stylesheet exactly once", () => {
+  it("injects the adapter stylesheet (via the helper) exactly once", () => {
     const { host } = mountFresh();
     host.mount(SAMPLE_ANALYSIS);
-    expect(document.querySelectorAll(`#${PLUGIN_ID}-style`).length).toBe(1);
+    expect(document.querySelectorAll(`#${STYLE_ID}`).length).toBe(1);
   });
 
   it("destroy() detaches panels, decorations and the stylesheet", () => {
@@ -88,7 +69,7 @@ describe("DpgPanelHost", () => {
     expect(container.children.length).toBe(0);
     expect(diagram.overlaysList.length).toBe(0);
     expect(diagram.markers.get(TASK_ID)?.has(axisYMarkerClass("runtimeBound"))).toBe(false);
-    expect(document.getElementById(`${PLUGIN_ID}-style`)).toBeNull();
+    expect(document.getElementById(STYLE_ID)).toBeNull();
   });
 
   it("update() re-paints with a new result", () => {
@@ -110,5 +91,25 @@ describe("DpgPanelHost", () => {
 
     expect(diagram.markers.get(TASK_ID)?.has(axisYMarkerClass("fullyDeterministic"))).toBe(true);
     expect(diagram.markers.get(TASK_ID)?.has(axisYMarkerClass("runtimeBound"))).toBe(false);
+  });
+
+  it("focuses the canvas when a panel dispatches dpg-element-select", () => {
+    const { container, diagram, host } = mountFresh();
+    host.mount(SAMPLE_ANALYSIS);
+
+    // The FakeDiagram has no selection service; the delegated listener must
+    // route the event into DpgCanvasSelection.focusElement without throwing.
+    const matrix = container.querySelector("dpg-governance-matrix")!;
+    expect(() =>
+      matrix.dispatchEvent(
+        new CustomEvent("dpg-element-select", {
+          detail: { elementId: GATEWAY_ID },
+          bubbles: true,
+          composed: true,
+        }),
+      ),
+    ).not.toThrow();
+    // Selection is tolerant: no selection service → no-op, canvas untouched.
+    expect(diagram.markers.get(GATEWAY_ID)?.has(axisYMarkerClass("fullyDeterministic"))).toBe(true);
   });
 });

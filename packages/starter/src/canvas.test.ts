@@ -39,11 +39,11 @@ describe("canvas starter", () => {
     expect(diagram.overlaysList.length).toBeGreaterThan(0);
 
     // The stylesheet was injected exactly once.
-    expect(document.querySelectorAll("#dpg-starter-style")).toHaveLength(1);
+    expect(document.querySelectorAll("#dpg-governance-panels-style")).toHaveLength(1);
 
     mounted.destroy();
     expect(container.querySelector("dpg-governance-matrix")).toBeNull();
     expect(diagram.markersFor("Task_Score")).toHaveLength(0);
-    expect(document.getElementById("dpg-starter-style")).toBeNull();
+    expect(document.getElementById("dpg-governance-panels-style")).toBeNull();
   });
 });

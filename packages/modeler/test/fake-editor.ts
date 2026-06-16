@@ -56,6 +56,13 @@ export class FakeEditor implements EditorServices {
     for (const cb of this.listeners.get(event) ?? []) cb({});
   }
 
+  /** Simulate a canvas selection: fires `selection.changed` like diagram-js. */
+  emitCanvasSelect(id: string | null): void {
+    const newSelection = id ? [{ id }] : [];
+    for (const cb of this.listeners.get("selection.changed") ?? [])
+      (cb as (e: unknown) => void)({ newSelection });
+  }
+
   private readonly eventBus: EventBusService = {
     on: (events: string | string[], cb: (event: DiagramEvent) => void): void => {
       for (const ev of toArray(events)) {

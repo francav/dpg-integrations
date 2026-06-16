@@ -28,6 +28,7 @@ import type {
   CompilerResultInput,
   DiagramElementIndex,
   GovernancePanelsHandle,
+  SelectorOption,
 } from "@francav/components";
 import { analyze } from "./headless.js";
 
@@ -50,6 +51,18 @@ export interface MountCanvasOptions {
    * compiler's evaluation-point ids are reconciled against the canvas ids.
    */
   diagram?: DiagramElementIndex;
+  /** Runtime-profile options shown in the inspector's profile/policy selector. */
+  profiles?: SelectorOption[];
+  /** Policy-pack options shown in the inspector's profile/policy selector. */
+  policies?: SelectorOption[];
+  /** The initially selected runtime profile id. */
+  selectedProfile?: string | null;
+  /** The initially selected policy id. */
+  selectedPolicy?: string | null;
+  /** Called when the inspector's profile selector changes. */
+  onProfileChange?: (id: string) => void;
+  /** Called when the inspector's policy selector changes. */
+  onPolicyChange?: (id: string) => void;
 }
 
 /**
@@ -68,15 +81,28 @@ export function mountCanvas(
   const selection = new DpgCanvasSelection(viewer);
 
   const panels = mountGovernancePanels(panelContainer, {
+    layout: "inspector",
     stylesheet: dpgStylesheet(),
-    // Panel → canvas: focus the clicked element and tell the panels about it.
+    profiles: options.profiles,
+    policies: options.policies,
+    selectedProfile: options.selectedProfile,
+    selectedPolicy: options.selectedPolicy,
+    // Panel → canvas: focus the clicked element and drill the inspector into it.
     onElementSelect: (id) => {
       selection.focusElement(id);
       panels.setSelectedElement(id);
     },
+    onProfileChange: options.onProfileChange,
+    onPolicyChange: options.onPolicyChange,
   });
   panels.update(result);
   binding.apply(result);
+
+  // Canvas → panel: clicking a shape on the canvas drills the inspector into
+  // that element (or back to the overview when the selection is cleared).
+  const unsubscribeCanvasSelect = selection.onCanvasSelect((id) => {
+    panels.setSelectedElement(id);
+  });
 
   return {
     panels,
@@ -87,6 +113,7 @@ export function mountCanvas(
       binding.apply(next);
     },
     destroy: (): void => {
+      unsubscribeCanvasSelect();
       binding.clear();
       panels.destroy();
     },

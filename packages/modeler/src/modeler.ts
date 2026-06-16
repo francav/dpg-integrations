@@ -8,11 +8,10 @@
  * Given a bpmn-js editor ({@link EditorServices}), a panel container, and an
  * injectable {@link Classifier}, it lets a user *edit* a process and keeps the
  * governance view live:
- *  - it mounts the L3 governance panels (determinism badge, matrix, findings)
- *    beside the canvas via `@francav/components`' shared
- *    {@link mountGovernancePanels} helper (which owns element registration, the
- *    panel set, the one-time stylesheet injection, and the delegated
- *    `dpg-element-select` listener),
+ *  - it mounts the consolidated governance inspector beside the canvas via
+ *    `@francav/components`' shared {@link mountGovernancePanels} helper (which
+ *    owns element registration, the inspector, the one-time stylesheet
+ *    injection, and the delegated `dpg-element-select` listener),
  *  - it subscribes to the editor's change events, and on each edit it exports
  *    the current XML, classifies it, maps the result onto the
  *    {@link AnalysisResult} view-model, and re-paints both the panels and the
@@ -31,6 +30,7 @@ import type {
   AnalysisResult,
   DiagramElementIndex,
   GovernancePanelsHandle,
+  SelectorOption,
 } from "@francav/components";
 import type { Classifier } from "./classify.js";
 import type { DiagramEvent, EditorServices, EventBusService } from "./editor.js";
@@ -58,6 +58,18 @@ export interface ReferenceModelerOptions {
   onClassified?: (result: AnalysisResult) => void;
   /** Called when a classification throws (e.g. invalid XML mid-edit). */
   onError?: (error: unknown) => void;
+  /** Runtime-profile options shown in the inspector's profile/policy selector. */
+  profiles?: SelectorOption[];
+  /** Policy-pack options shown in the inspector's profile/policy selector. */
+  policies?: SelectorOption[];
+  /** The initially selected runtime profile id. */
+  selectedProfile?: string | null;
+  /** The initially selected policy id. */
+  selectedPolicy?: string | null;
+  /** Called when the inspector's profile selector changes. */
+  onProfileChange?: (id: string) => void;
+  /** Called when the inspector's policy selector changes. */
+  onPolicyChange?: (id: string) => void;
 }
 
 /** A live reference-modeler session: panels, binding, and lifecycle. */
@@ -107,15 +119,29 @@ export class DpgReferenceModeler {
     const binding = new DpgCanvasBinding(this.editor);
     const selection = new DpgCanvasSelection(this.editor);
 
-    // The helper owns element registration, the flat panel set, the one-time
-    // stylesheet injection, and the single delegated `dpg-element-select`
-    // listener. Panel → canvas: focus the named element and inform the panels.
+    // The helper owns element registration, the consolidated inspector, the
+    // one-time stylesheet injection, and the single delegated
+    // `dpg-element-select` listener. Panel → canvas: focus the named element
+    // and drill the inspector into it.
     const panels = mountGovernancePanels(this.container, {
+      layout: "inspector",
       stylesheet: dpgStylesheet(),
+      profiles: options.profiles,
+      policies: options.policies,
+      selectedProfile: options.selectedProfile,
+      selectedPolicy: options.selectedPolicy,
       onElementSelect: (id) => {
         selection.focusElement(id);
         panels.setSelectedElement(id);
       },
+      onProfileChange: options.onProfileChange,
+      onPolicyChange: options.onPolicyChange,
+    });
+
+    // Canvas → panel: clicking a shape on the canvas drills the inspector into
+    // that element (or back to the overview when the selection is cleared).
+    const unsubscribeCanvasSelect = selection.onCanvasSelect((id) => {
+      panels.setSelectedElement(id);
     });
 
     let latest: AnalysisResult | null = null;
@@ -178,6 +204,7 @@ export class DpgReferenceModeler {
         destroyed = true;
         if (timer) clearTimeout(timer);
         unsubscribe(eventBus, changeEvents, onChange);
+        unsubscribeCanvasSelect();
         binding.clear();
         panels.destroy();
       },

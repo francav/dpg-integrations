@@ -7,11 +7,11 @@
  *
  * It is the thin glue the plugin needs and nothing more. It builds on
  * `@francav/components`' shared {@link mountGovernancePanels} helper so it renders
- * the SAME flat panel set as the reference modeler — resolving the historical
- * 3-vs-4 contradiction (the standalone profile/policy selector is dropped for
- * now and returns inside the consolidated inspector in F.3c). The helper owns
- * element registration, the panel set, the one-time stylesheet injection, and
- * the delegated `dpg-element-select` listener. This host additionally:
+ * the SAME consolidated `dpg-governance-inspector` as the reference modeler —
+ * a single panel with process-overview ↔ element drill-down (the profile/policy
+ * selector returns inside it). The helper owns element registration, the
+ * inspector, the one-time stylesheet injection, and the delegated
+ * `dpg-element-select` listener. This host additionally:
  *  - constructs the canvas {@link DpgCanvasBinding} (paint) and
  *    {@link DpgCanvasSelection} (panel→canvas focus), and
  *  - hands the adapter's overlay CSS to the helper as a string, so
@@ -21,22 +21,37 @@
  * upstream (by `@francav/components`' `mapCompilerResult`) and handed in. The
  * shipping client plugin uses `dpg-modeler`'s `startReferenceModeler` for the
  * LIVE editing path; this host is the viewer-only counterpart, and both now
- * mount the identical panel set via the one helper.
+ * mount the identical inspector via the one helper.
  */
 
 import { DpgCanvasBinding, DpgCanvasSelection, dpgStylesheet } from "@francav/bpmn-js-adapter";
 import type { DiagramServices } from "@francav/bpmn-js-adapter";
 import { mountGovernancePanels } from "@francav/components";
-import type { AnalysisResult, GovernancePanelsHandle } from "@francav/components";
+import type { AnalysisResult, GovernancePanelsHandle, SelectorOption } from "@francav/components";
+import { DEFAULT_POLICY_ID, DEFAULT_PROFILE_ID } from "./manifest.js";
+
+/** The Camunda-default profile/policy the inspector's selector is seeded with. */
+const DEFAULT_PROFILES: SelectorOption[] = [{ id: DEFAULT_PROFILE_ID, label: "Camunda 7" }];
+const DEFAULT_POLICIES: SelectorOption[] = [{ id: DEFAULT_POLICY_ID, label: "Baseline Tier 2" }];
 
 export interface PanelHostOptions {
   /**
-   * Called when the (future inspector) profile selector changes. Defined now
-   * for parity with the helper; unused in the flat layout, which has no
-   * selector. Ready for F.3c.
+   * Runtime-profile options for the inspector's selector. Defaults to the
+   * plugin's Camunda-7 profile ({@link DEFAULT_PROFILE_ID}).
    */
+  profiles?: SelectorOption[];
+  /**
+   * Policy-pack options for the inspector's selector. Defaults to the plugin's
+   * tier-2 baseline policy ({@link DEFAULT_POLICY_ID}).
+   */
+  policies?: SelectorOption[];
+  /** Initially selected runtime profile id. Defaults to {@link DEFAULT_PROFILE_ID}. */
+  selectedProfile?: string | null;
+  /** Initially selected policy id. Defaults to {@link DEFAULT_POLICY_ID}. */
+  selectedPolicy?: string | null;
+  /** Called when the inspector's profile selector changes. */
   onProfileChange?: (id: string) => void;
-  /** Called when the (future inspector) policy selector changes. See above. */
+  /** Called when the inspector's policy selector changes. */
   onPolicyChange?: (id: string) => void;
 }
 
@@ -72,7 +87,13 @@ export class DpgPanelHost {
     const selection = new DpgCanvasSelection(this.diagram);
 
     const panels = mountGovernancePanels(this.container, {
+      layout: "inspector",
       stylesheet: dpgStylesheet(),
+      // Seed the Camunda defaults; the host may override them.
+      profiles: options.profiles ?? DEFAULT_PROFILES,
+      policies: options.policies ?? DEFAULT_POLICIES,
+      selectedProfile: options.selectedProfile ?? DEFAULT_PROFILE_ID,
+      selectedPolicy: options.selectedPolicy ?? DEFAULT_POLICY_ID,
       onElementSelect: (id) => {
         selection.focusElement(id);
         panels.setSelectedElement(id);
@@ -83,6 +104,12 @@ export class DpgPanelHost {
     panels.update(result);
     binding.apply(result);
 
+    // Canvas → panel: clicking a shape on the canvas drills the inspector into
+    // that element (or back to the overview when the selection is cleared).
+    const unsubscribeCanvasSelect = selection.onCanvasSelect((id) => {
+      panels.setSelectedElement(id);
+    });
+
     return {
       panels,
       binding,
@@ -92,6 +119,7 @@ export class DpgPanelHost {
         binding.apply(next);
       },
       destroy: (): void => {
+        unsubscribeCanvasSelect();
         binding.clear();
         panels.destroy();
       },

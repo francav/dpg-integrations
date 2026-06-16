@@ -28,10 +28,13 @@ describe("canvas starter", () => {
       diagram: { elements: SAMPLE_ELEMENT_IDS.map((id) => ({ id })) },
     });
 
-    // L3 panels are mounted as custom elements in the container.
-    expect(container.querySelector("dpg-governance-matrix")).toBeTruthy();
-    expect(container.querySelector("dpg-findings-panel")).toBeTruthy();
-    expect(container.querySelector("dpg-determinism-badge")).toBeTruthy();
+    // The consolidated inspector is mounted as a single custom element.
+    const inspector = container.querySelector("dpg-governance-inspector");
+    expect(inspector).toBeTruthy();
+    expect(mounted.panels.layout).toBe("inspector");
+    // It composes the embedded panels inside its own shadow root.
+    expect(inspector?.shadowRoot?.querySelector("dpg-determinism-badge")).toBeTruthy();
+    expect(inspector?.shadowRoot?.querySelector("dpg-findings-panel")).toBeTruthy();
 
     // The adapter painted a determinism marker on the classified service task.
     expect(diagram.markersFor("Task_Score").length).toBeGreaterThan(0);
@@ -42,8 +45,35 @@ describe("canvas starter", () => {
     expect(document.querySelectorAll("#dpg-governance-panels-style")).toHaveLength(1);
 
     mounted.destroy();
-    expect(container.querySelector("dpg-governance-matrix")).toBeNull();
+    expect(container.querySelector("dpg-governance-inspector")).toBeNull();
     expect(diagram.markersFor("Task_Score")).toHaveLength(0);
     expect(document.getElementById("dpg-governance-panels-style")).toBeNull();
+  });
+
+  it("canvas→panel: selecting a shape on the canvas drills the inspector in", () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const diagram = new FakeDiagram(SAMPLE_ELEMENT_IDS);
+
+    const mounted = mountCanvas(diagram, container, SAMPLE_COMPILER_RESULT, {
+      diagram: { elements: SAMPLE_ELEMENT_IDS.map((id) => ({ id })) },
+    });
+    const inspector = container.querySelector("dpg-governance-inspector") as HTMLElement & {
+      selectedElementId: string | null;
+    };
+
+    // Overview initially (no element selected).
+    expect(inspector.selectedElementId).toBeNull();
+
+    // A canvas selection drives the inspector into element drill-down.
+    diagram.emitCanvasSelect("Task_Score");
+    expect(inspector.selectedElementId).toBe("Task_Score");
+    expect(inspector.shadowRoot?.querySelector("dpg-element-provenance")).toBeTruthy();
+
+    // Clearing the canvas selection returns the inspector to the overview.
+    diagram.emitCanvasSelect(null);
+    expect(inspector.selectedElementId).toBeNull();
+
+    mounted.destroy();
   });
 });

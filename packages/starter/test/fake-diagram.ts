@@ -19,15 +19,48 @@ interface RecordedOverlay {
 export class FakeDiagram implements DiagramServices {
   readonly overlaysList: RecordedOverlay[] = [];
   readonly markers = new Map<string, Set<string>>();
+  readonly selected: string[] = [];
   private seq = 0;
   private readonly ids: Set<string>;
+  private readonly listeners = new Map<string, Array<(event: unknown) => void>>();
 
   constructor(ids: readonly string[]) {
     this.ids = new Set(ids);
   }
 
+  /** Simulate a canvas selection: fires `selection.changed` like diagram-js. */
+  emitCanvasSelect(id: string | null): void {
+    this.selected.length = 0;
+    if (id) this.selected.push(id);
+    const newSelection = id ? [{ id }] : [];
+    for (const cb of this.listeners.get("selection.changed") ?? []) cb({ newSelection });
+  }
+
   get<T = unknown>(name: string): T {
     switch (name) {
+      case "eventBus":
+        return {
+          on: (event: string, cb: (e: unknown) => void): void => {
+            const list = this.listeners.get(event) ?? [];
+            list.push(cb);
+            this.listeners.set(event, list);
+          },
+          off: (event: string, cb: (e: unknown) => void): void => {
+            const list = this.listeners.get(event);
+            if (list)
+              this.listeners.set(
+                event,
+                list.filter((l) => l !== cb),
+              );
+          },
+        } as T;
+      case "selection":
+        return {
+          select: (element: { id: string } | null): void => {
+            this.selected.length = 0;
+            if (element) this.selected.push(element.id);
+          },
+        } as T;
       case "overlays":
         return {
           add: (element: string, type: string): string => {

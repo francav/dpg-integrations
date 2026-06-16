@@ -5,7 +5,6 @@
 
 import { afterEach, describe, expect, it } from "vitest";
 import { axisYMarkerClass } from "@francav/bpmn-js-adapter";
-import { FLAT_PANEL_TAGS } from "@francav/components";
 import { DpgPanelHost } from "./panel-host.js";
 import { FakeDiagram, GATEWAY_ID, SAMPLE_ANALYSIS, TASK_ID } from "../test/fixtures.js";
 
@@ -24,27 +23,32 @@ afterEach(() => {
 });
 
 describe("DpgPanelHost", () => {
-  it("delegates to the shared helper and mounts the flat panel set", () => {
+  it("delegates to the shared helper and mounts the consolidated inspector", () => {
     const { container, host } = mountFresh();
     const mounted = host.mount(SAMPLE_ANALYSIS);
 
-    // Same flat set as the modeler path (badge + matrix + findings) — and no
-    // standalone selector (it returns inside the inspector in F.3c).
-    for (const tag of FLAT_PANEL_TAGS) {
-      expect(container.querySelector(tag)).toBeTruthy();
-    }
-    expect(container.querySelector("dpg-profile-policy-selector")).toBeNull();
+    // Same consolidated inspector as the modeler path — and the profile/policy
+    // selector now returns inside it, seeded with the Camunda defaults.
+    const inspector = container.querySelector("dpg-governance-inspector");
+    expect(inspector).toBeTruthy();
+    expect(mounted.panels.layout).toBe("inspector");
+    expect(inspector?.shadowRoot?.querySelector("dpg-governance-matrix")).toBeNull(); // collapsed
+    expect(inspector?.shadowRoot?.querySelector("dpg-findings-panel")).toBeTruthy();
+    // The Camunda-default profile/policy selector is seeded inside the inspector.
+    const selector = inspector?.shadowRoot?.querySelector("dpg-profile-policy-selector");
+    expect(selector).toBeTruthy();
+    expect(selector?.shadowRoot?.textContent).toContain("Camunda 7");
     // The helper handle is exposed on the mounted result.
     expect(mounted.panels.container).toBe(container);
   });
 
-  it("feeds the analysis result into the rendered panels", () => {
+  it("feeds the analysis result into the inspector", () => {
     const { container, host } = mountFresh();
     host.mount(SAMPLE_ANALYSIS);
-    const matrix = container.querySelector("dpg-governance-matrix") as HTMLElement & {
+    const inspector = container.querySelector("dpg-governance-inspector") as HTMLElement & {
       result?: unknown;
     };
-    expect(matrix.result).toBe(SAMPLE_ANALYSIS);
+    expect(inspector.result).toBe(SAMPLE_ANALYSIS);
   });
 
   it("paints determinism markers onto the canvas via the adapter", () => {
@@ -93,23 +97,38 @@ describe("DpgPanelHost", () => {
     expect(diagram.markers.get(TASK_ID)?.has(axisYMarkerClass("runtimeBound"))).toBe(false);
   });
 
-  it("focuses the canvas when a panel dispatches dpg-element-select", () => {
+  it("focuses the canvas when the inspector re-dispatches dpg-element-select", () => {
     const { container, diagram, host } = mountFresh();
     host.mount(SAMPLE_ANALYSIS);
 
-    // The FakeDiagram has no selection service; the delegated listener must
-    // route the event into DpgCanvasSelection.focusElement without throwing.
-    const matrix = container.querySelector("dpg-governance-matrix")!;
-    expect(() =>
-      matrix.dispatchEvent(
-        new CustomEvent("dpg-element-select", {
-          detail: { elementId: GATEWAY_ID },
-          bubbles: true,
-          composed: true,
-        }),
-      ),
-    ).not.toThrow();
-    // Selection is tolerant: no selection service → no-op, canvas untouched.
+    // The inspector re-dispatches the bubbling, composed event upward; the
+    // delegated listener routes it into DpgCanvasSelection.focusElement.
+    const inspector = container.querySelector("dpg-governance-inspector")!;
+    inspector.dispatchEvent(
+      new CustomEvent("dpg-element-select", {
+        detail: { elementId: GATEWAY_ID },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    expect(diagram.selected).toContain(GATEWAY_ID);
     expect(diagram.markers.get(GATEWAY_ID)?.has(axisYMarkerClass("fullyDeterministic"))).toBe(true);
+  });
+
+  it("canvas→panel: selecting a shape on the canvas drills the inspector in", () => {
+    const { container, diagram, host } = mountFresh();
+    host.mount(SAMPLE_ANALYSIS);
+
+    const inspector = container.querySelector("dpg-governance-inspector") as HTMLElement & {
+      selectedElementId: string | null;
+    };
+    expect(inspector.selectedElementId).toBeNull();
+
+    diagram.emitCanvasSelect(TASK_ID);
+    expect(inspector.selectedElementId).toBe(TASK_ID);
+    expect(inspector.shadowRoot?.querySelector("dpg-element-provenance")).toBeTruthy();
+
+    diagram.emitCanvasSelect(null);
+    expect(inspector.selectedElementId).toBeNull();
   });
 });

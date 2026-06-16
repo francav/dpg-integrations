@@ -15,7 +15,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { axisYMarkerClass } from "@francav/bpmn-js-adapter";
 import type { AnalysisResult } from "@francav/components";
-import { FLAT_PANEL_TAGS } from "@francav/components";
 import { startReferenceModeler } from "./modeler.js";
 import { SAMPLE_BPMN, sampleClassifier } from "./sample.js";
 import { FakeEditor } from "../test/fake-editor.js";
@@ -46,10 +45,12 @@ describe("DpgReferenceModeler", () => {
     const session = startReferenceModeler(editor, container, sampleClassifier, { debounceMs: 0 });
     await session.reclassify();
 
-    // The session mounts the shared flat panel set via the helper.
-    for (const tag of FLAT_PANEL_TAGS) {
-      expect(container.querySelector(tag)).toBeTruthy();
-    }
+    // The session mounts the consolidated inspector via the helper (default layout).
+    const inspector = container.querySelector("dpg-governance-inspector") as HTMLElement & {
+      result?: AnalysisResult;
+    };
+    expect(inspector).toBeTruthy();
+    expect(session.panels.layout).toBe("inspector");
     // The helper's handle is exposed on the session.
     expect(session.panels.container).toBe(container);
     expect(session.result).not.toBeNull();
@@ -60,11 +61,9 @@ describe("DpgReferenceModeler", () => {
     expect(matrix.axisY.runtimeBound).toBe(1);
     expect(matrix.axisY.fullyDeterministic).toBe(1);
 
-    // The view-model is fed into every rendered panel.
-    const badge = container.querySelector("dpg-determinism-badge") as HTMLElement & {
-      result?: AnalysisResult;
-    };
-    expect(badge.result).toBe(session.result);
+    // The view-model is fed into the inspector, which composes the embedded panels.
+    expect(inspector.result).toBe(session.result);
+    expect(inspector.shadowRoot?.querySelector("dpg-determinism-badge")).toBeTruthy();
 
     session.destroy();
   });
@@ -112,9 +111,9 @@ describe("DpgReferenceModeler", () => {
     const session = startReferenceModeler(editor, container, sampleClassifier, { debounceMs: 0 });
     await session.reclassify();
 
-    // Simulate the matrix/findings panel emitting its bubbling, composed event.
-    const matrix = container.querySelector("dpg-governance-matrix")!;
-    matrix.dispatchEvent(
+    // Simulate the inspector re-dispatching its bubbling, composed event upward.
+    const inspector = container.querySelector("dpg-governance-inspector")!;
+    inspector.dispatchEvent(
       new CustomEvent("dpg-element-select", {
         detail: { elementId: "Gateway_Decide" },
         bubbles: true,
@@ -144,9 +143,31 @@ describe("DpgReferenceModeler", () => {
 
     session.destroy();
     expect(editor.listenerCount("commandStack.changed")).toBe(0);
-    // Panels and stylesheet (owned by the helper) are torn down.
-    expect(container.querySelector("dpg-governance-matrix")).toBeNull();
+    // Inspector and stylesheet (owned by the helper) are torn down.
+    expect(container.querySelector("dpg-governance-inspector")).toBeNull();
     expect(document.getElementById("dpg-governance-panels-style")).toBeNull();
+  });
+
+  it("canvas→panel: selecting a shape on the canvas drills the inspector in", async () => {
+    const { container, editor } = mountFresh();
+    const session = startReferenceModeler(editor, container, sampleClassifier, { debounceMs: 0 });
+    await session.reclassify();
+
+    const inspector = container.querySelector("dpg-governance-inspector") as HTMLElement & {
+      selectedElementId: string | null;
+    };
+    expect(inspector.selectedElementId).toBeNull();
+
+    // A canvas selection drives the inspector into element drill-down.
+    editor.emitCanvasSelect("Gateway_Decide");
+    expect(inspector.selectedElementId).toBe("Gateway_Decide");
+    expect(inspector.shadowRoot?.querySelector("dpg-element-provenance")).toBeTruthy();
+
+    // Clearing the canvas selection returns the inspector to the overview.
+    editor.emitCanvasSelect(null);
+    expect(inspector.selectedElementId).toBeNull();
+
+    session.destroy();
   });
 
   it("reports classification errors instead of throwing", async () => {

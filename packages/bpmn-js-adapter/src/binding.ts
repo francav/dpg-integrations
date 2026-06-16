@@ -199,6 +199,10 @@ export class DpgCanvasBinding {
   /** Remove every decoration this binding added. Idempotent. */
   clear(): void {
     for (const id of this.markedElements) {
+      // An editing host (e.g. the reference modeler) may have deleted the
+      // element since it was marked; skip ids no longer in the diagram so
+      // clear() stays safe across edits.
+      if (!this.services.registry.get(id)) continue;
       // Markers carry the axis-y class; remove all three defensively.
       this.services.canvas.removeMarker(id, axisYMarkerClass("fullyDeterministic"));
       this.services.canvas.removeMarker(id, axisYMarkerClass("policyDependent"));

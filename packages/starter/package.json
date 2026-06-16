@@ -5,6 +5,9 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "bin": {
+    "dpg-starter": "dist/cli.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -16,8 +19,24 @@
   ],
   "scripts": {
     "build": "tsc -b",
+    "start": "node dist/cli.js",
     "test": "vitest run",
     "lint": "eslint .",
     "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "@dpg/bpmn-js-adapter": "*",
+    "@dpg/components": "git+https://github.com/francav/dpg-components.git#v0.1.0"
+  },
+  "peerDependencies": {
+    "bpmn-js": ">=11"
+  },
+  "peerDependenciesMeta": {
+    "bpmn-js": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "jsdom": "^25"
   }
 }

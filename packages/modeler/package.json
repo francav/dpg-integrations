@@ -19,5 +19,20 @@
     "test": "vitest run",
     "lint": "eslint .",
     "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "@dpg/bpmn-js-adapter": "*",
+    "@dpg/components": "git+https://github.com/francav/dpg-components.git#v0.1.0"
+  },
+  "peerDependencies": {
+    "bpmn-js": ">=11"
+  },
+  "peerDependenciesMeta": {
+    "bpmn-js": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "bpmn-js": "^18"
   }
 }

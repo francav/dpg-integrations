@@ -21,7 +21,7 @@ jobs:
           DPG_REPO_TOKEN: ${{ secrets.DPG_REPO_TOKEN }}
         run: |
           for from in "ssh://git@github.com/" "git@github.com:" "https://github.com/"; do
-            git config --global url."https://x-access-token:${DPG_REPO_TOKEN}@github.com/".insteadOf "$from"
+            git config --global --add url."https://x-access-token:${DPG_REPO_TOKEN}@github.com/".insteadOf "$from"
           done
       - run: npm ci
       - run: npm run lint

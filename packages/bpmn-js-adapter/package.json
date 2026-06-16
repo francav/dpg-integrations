@@ -21,7 +21,7 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
-    "@dpg/components": "file:/Users/francav/.dpg-local-deps/dpg-components-0.1.0-dc0197f.tgz"
+    "@dpg/components": "git+https://github.com/francav/dpg-components.git#v0.1.0"
   },
   "peerDependencies": {
     "bpmn-js": ">=11"

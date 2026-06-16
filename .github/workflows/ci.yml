@@ -12,6 +12,17 @@ jobs:
         with:
           node-version: 20
           cache: npm
+      # @dpg/components is a private cross-repo git dependency (temporary, until a
+      # registry is in place). Rewrite git URLs to authenticate over HTTPS with a
+      # token that can read the private dpg-components repo. Covers the ssh form npm
+      # records in the lockfile's "resolved" field as well as https/scp forms.
+      - name: Authenticate git for private @dpg dependencies
+        env:
+          DPG_REPO_TOKEN: ${{ secrets.DPG_REPO_TOKEN }}
+        run: |
+          for from in "ssh://git@github.com/" "git@github.com:" "https://github.com/"; do
+            git config --global url."https://x-access-token:${DPG_REPO_TOKEN}@github.com/".insteadOf "$from"
+          done
       - run: npm ci
       - run: npm run lint
       - run: npm run format:check

@@ -22,9 +22,9 @@
  * canvas adapter rather than a bespoke canvas.
  */
 
-import { DpgCanvasBinding, dpgStylesheet } from "@francav/bpmn-js-adapter";
+import { DpgCanvasBinding, DpgCanvasSelection, dpgStylesheet } from "@francav/bpmn-js-adapter";
 import { defineDpgElements, mapCompilerResult } from "@francav/components";
-import type { AnalysisResult, DiagramElementIndex } from "@francav/components";
+import type { AnalysisResult, DiagramElementIndex, ElementSelectDetail } from "@francav/components";
 import type { Classifier } from "./classify.js";
 import type { DiagramEvent, EditorServices, EventBusService } from "./editor.js";
 
@@ -45,6 +45,14 @@ export type ModelerPanelTag = (typeof MODELER_PANEL_TAGS)[number];
 export const DEFAULT_CHANGE_EVENTS = ["commandStack.changed", "elements.changed"] as const;
 
 const STYLE_ELEMENT_ID = "dpg-reference-modeler-style";
+
+/**
+ * The bubbling, composed event the L3 governance panels (matrix, findings)
+ * dispatch when the user clicks an element-bound dot/finding. The modeler
+ * listens for it once on the panel container (event delegation) and focuses the
+ * named element on the canvas.
+ */
+const ELEMENT_SELECT_EVENT = "dpg-element-select";
 
 export interface ReferenceModelerOptions {
   /**
@@ -74,6 +82,12 @@ export interface ReferenceModelerOptions {
 export interface ReferenceModelerSession {
   readonly elements: Record<ModelerPanelTag, HTMLElement>;
   readonly binding: DpgCanvasBinding;
+  /**
+   * The canvas selection seam. A delegated listener already wires panel
+   * `dpg-element-select` events to {@link DpgCanvasSelection.focusElement}; this
+   * is exposed for hosts that want to drive selection programmatically.
+   */
+  readonly selection: DpgCanvasSelection;
   /** The latest classification, or `null` before the first one completes. */
   readonly result: AnalysisResult | null;
   /** Force a re-classification now (bypasses the debounce). Resolves when done. */
@@ -111,6 +125,17 @@ export class DpgReferenceModeler {
 
     const elements = this.createElements(ownerDoc);
     const binding = new DpgCanvasBinding(this.editor);
+    const selection = new DpgCanvasSelection(this.editor);
+
+    // Panel → canvas: one delegated listener on the panel container catches the
+    // bubbling, composed `dpg-element-select` from any L3 panel (matrix or
+    // findings) and focuses (selects + pans to) the named element on the canvas.
+    const onElementSelect = (event: Event): void => {
+      const detail = (event as CustomEvent<ElementSelectDetail>).detail;
+      const elementId = detail?.elementId;
+      if (elementId) selection.focusElement(elementId);
+    };
+    this.container.addEventListener(ELEMENT_SELECT_EVENT, onElementSelect);
 
     let latest: AnalysisResult | null = null;
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -159,6 +184,7 @@ export class DpgReferenceModeler {
     return {
       elements,
       binding,
+      selection,
       get result(): AnalysisResult | null {
         return latest;
       },
@@ -173,6 +199,7 @@ export class DpgReferenceModeler {
         destroyed = true;
         if (timer) clearTimeout(timer);
         unsubscribe(eventBus, changeEvents, onChange);
+        this.container.removeEventListener(ELEMENT_SELECT_EVENT, onElementSelect);
         binding.clear();
         for (const el of Object.values(elements)) el.remove();
         if (styleTarget) styleTarget.getElementById(STYLE_ELEMENT_ID)?.remove();

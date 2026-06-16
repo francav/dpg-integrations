@@ -20,9 +20,12 @@
 import type { AnalysisResult, Finding, FindingSeverity } from "@francav/components";
 import type {
   CanvasService,
+  DiagramElement,
   DiagramServices,
   ElementRegistryService,
+  EventBusService,
   OverlaysService,
+  SelectionService,
 } from "./bpmn-js.js";
 import { AXIS_X_STYLE } from "./presentation.js";
 import { FINDING_SEVERITY_RANK } from "./presentation.js";
@@ -34,6 +37,25 @@ import {
 } from "./overlay-html.js";
 
 const OVERLAY_TYPE = `${DPG_CLASS_PREFIX}-governance`;
+
+/**
+ * Resolve a view-model / compiler element id to a diagram element id via the
+ * `elementRegistry`. Tries the id verbatim, then the local part after the last
+ * `:` / `}` namespace separator, so a compiler id like `ns:Task_1` still lands
+ * on diagram `Task_1`. Returns `undefined` if no diagram element matches.
+ */
+export function resolveDiagramId(
+  registry: ElementRegistryService,
+  elementId: string,
+): string | undefined {
+  if (registry.get(elementId)) return elementId;
+  const sep = Math.max(elementId.lastIndexOf(":"), elementId.lastIndexOf("}"));
+  if (sep >= 0) {
+    const local = elementId.slice(sep + 1);
+    if (local && registry.get(local)) return local;
+  }
+  return undefined;
+}
 
 /** Which decorations the binding paints. All default to on. */
 export interface BindingOptions {
@@ -93,18 +115,11 @@ export class DpgCanvasBinding {
   }
 
   /**
-   * Resolve a view-model element id to a diagram element id. Tries the id
-   * verbatim, then the local part after the last `:` / `}` namespace separator,
-   * so a compiler id like `ns:Task_1` still lands on diagram `Task_1`.
+   * Resolve a view-model element id to a diagram element id via the shared
+   * {@link resolveDiagramId} helper (tolerates namespace-prefixed ids).
    */
   private resolveId(elementId: string): string | undefined {
-    if (this.services.registry.get(elementId)) return elementId;
-    const sep = Math.max(elementId.lastIndexOf(":"), elementId.lastIndexOf("}"));
-    if (sep >= 0) {
-      const local = elementId.slice(sep + 1);
-      if (local && this.services.registry.get(local)) return local;
-    }
-    return undefined;
+    return resolveDiagramId(this.services.registry, elementId);
   }
 
   /** Group findings by their (resolved) target element id. */
@@ -229,4 +244,103 @@ export function bindAnalysisToCanvas(
   const binding = new DpgCanvasBinding(diagram, options);
   binding.apply(result);
   return binding;
+}
+
+/** Payload diagram-js emits on the `selection.changed` event. Structural. */
+interface SelectionChangedEvent {
+  newSelection?: DiagramElement[];
+}
+
+/**
+ * {@link DpgCanvasSelection} — read/drive the canvas selection of a bpmn-js (or
+ * bare diagram-js) host, the companion read/navigate seam to the write-only
+ * {@link DpgCanvasBinding}.
+ *
+ * It lets a governance panel programmatically select and pan to an element
+ * (panel → canvas), and lets a host observe canvas selection changes (canvas →
+ * panel). Like the binding, it imports no `bpmn-js` and touches only structural
+ * services resolved through {@link DiagramServices.get}. Every service is
+ * resolved lazily and tolerantly: if `selection`, `eventBus`, or
+ * `scrollToElement` is absent (an older or bare host), the corresponding method
+ * degrades to a graceful no-op (returning `false`) rather than throwing.
+ */
+export class DpgCanvasSelection {
+  private readonly diagram: DiagramServices;
+
+  constructor(diagram: DiagramServices) {
+    this.diagram = diagram;
+  }
+
+  /** Lazily resolve a service, swallowing a host that throws on unknown names. */
+  private service<T>(name: string): T | undefined {
+    try {
+      return this.diagram.get<T>(name) ?? undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  private get registry(): ElementRegistryService | undefined {
+    return this.service<ElementRegistryService>("elementRegistry");
+  }
+
+  /**
+   * Select `elementId` on the canvas. Resolves the id via the registry, then
+   * calls `selection.select(el)`. Returns `false` (no-op) if the `selection`
+   * service or the element is unavailable.
+   */
+  selectElement(elementId: string): boolean {
+    const selection = this.service<SelectionService>("selection");
+    if (!selection) return false;
+    const registry = this.registry;
+    const resolved = registry ? resolveDiagramId(registry, elementId) : undefined;
+    const element = resolved && registry ? registry.get(resolved) : undefined;
+    if (!element) return false;
+    selection.select(element);
+    return true;
+  }
+
+  /**
+   * Pan/scroll the viewport so `elementId` is in view, preferring
+   * `canvas.scrollToElement`. Returns `false` if the canvas, the navigation
+   * method, or the element is unavailable.
+   */
+  centerElement(elementId: string): boolean {
+    const canvas = this.service<CanvasService>("canvas");
+    if (!canvas || typeof canvas.scrollToElement !== "function") return false;
+    const registry = this.registry;
+    const resolved = registry ? resolveDiagramId(registry, elementId) : undefined;
+    const element = resolved && registry ? registry.get(resolved) : undefined;
+    if (!element) return false;
+    canvas.scrollToElement(element);
+    return true;
+  }
+
+  /**
+   * Select *and* center an element — the common "jump to this element" path.
+   * Returns `true` if the selection succeeded (centering is best-effort and
+   * does not affect the result).
+   */
+  focusElement(elementId: string): boolean {
+    const selected = this.selectElement(elementId);
+    this.centerElement(elementId);
+    return selected;
+  }
+
+  /**
+   * Subscribe to canvas selection changes. `cb` receives the id of the first
+   * selected element, or `null` when the selection is cleared. Returns an
+   * unsubscribe function. No-ops (returns a no-op unsubscribe) when `eventBus`
+   * is unavailable.
+   */
+  onCanvasSelect(cb: (elementId: string | null) => void): () => void {
+    const eventBus = this.service<EventBusService>("eventBus");
+    if (!eventBus) return () => {};
+    const handler = (event: unknown): void => {
+      const newSelection = (event as SelectionChangedEvent | undefined)?.newSelection;
+      cb(newSelection?.[0]?.id ?? null);
+    };
+    eventBus.on("selection.changed", handler);
+    return () => eventBus.off("selection.changed", handler);
+  }
 }

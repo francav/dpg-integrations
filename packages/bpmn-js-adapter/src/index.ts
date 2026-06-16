@@ -27,7 +27,12 @@
  * ```
  */
 
-export { DpgCanvasBinding, bindAnalysisToCanvas } from "./binding.js";
+export {
+  DpgCanvasBinding,
+  DpgCanvasSelection,
+  bindAnalysisToCanvas,
+  resolveDiagramId,
+} from "./binding.js";
 export type { BindingOptions, ApplyReport } from "./binding.js";
 
 export {
@@ -53,6 +58,8 @@ export type {
   OverlaysService,
   CanvasService,
   ElementRegistryService,
+  SelectionService,
+  EventBusService,
   OverlayAttrs,
   OverlayPosition,
 } from "./bpmn-js.js";

@@ -31,6 +31,10 @@ interface RecordedOverlay {
 export class FakeEditor implements EditorServices {
   readonly overlaysList: RecordedOverlay[] = [];
   readonly markers = new Map<string, Set<string>>();
+  /** Element ids passed to `selection.select`, in order. */
+  readonly selected: string[] = [];
+  /** Element ids passed to `canvas.scrollToElement`, in order. */
+  readonly scrolledTo: string[] = [];
   private seq = 0;
   private xml: string;
   private ids: Set<string>;
@@ -105,11 +109,22 @@ export class FakeEditor implements EditorServices {
           },
           hasMarker: (element: string, marker: string): boolean =>
             this.markers.get(element)?.has(marker) ?? false,
+          scrollToElement: (element: string | { id: string }): void => {
+            this.scrolledTo.push(typeof element === "string" ? element : element.id);
+          },
         } as T;
       case "elementRegistry":
         return {
           get: (id: string): { id: string } | undefined => (this.ids.has(id) ? { id } : undefined),
           getAll: (): { id: string }[] => [...this.ids].map((id) => ({ id })),
+        } as T;
+      case "selection":
+        return {
+          select: (element: string | { id: string } | null): void => {
+            if (element === null) return;
+            this.selected.push(typeof element === "string" ? element : element.id);
+          },
+          get: (): { id: string }[] => [],
         } as T;
       default:
         throw new Error(`FakeEditor: unknown service "${name}"`);

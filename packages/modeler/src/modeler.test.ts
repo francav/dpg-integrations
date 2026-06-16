@@ -103,6 +103,36 @@ describe("DpgReferenceModeler", () => {
     session.destroy();
   });
 
+  it("focuses the canvas when a panel dispatches dpg-element-select", async () => {
+    const { container, editor } = mountFresh();
+    const session = startReferenceModeler(editor, container, sampleClassifier, { debounceMs: 0 });
+    await session.reclassify();
+
+    // Simulate the matrix/findings panel emitting its bubbling, composed event.
+    const matrix = container.querySelector("dpg-governance-matrix")!;
+    matrix.dispatchEvent(
+      new CustomEvent("dpg-element-select", {
+        detail: { elementId: "Gateway_Decide" },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+
+    expect(editor.selected).toContain("Gateway_Decide");
+    expect(editor.scrolledTo).toContain("Gateway_Decide");
+
+    // After destroy, the delegated listener is gone — no further focus.
+    session.destroy();
+    container.dispatchEvent(
+      new CustomEvent("dpg-element-select", {
+        detail: { elementId: "StartEvent_1" },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    expect(editor.selected).not.toContain("StartEvent_1");
+  });
+
   it("subscribes on start and unsubscribes on destroy", () => {
     const { container, editor } = mountFresh();
     const session = startReferenceModeler(editor, container, sampleClassifier, { debounceMs: 0 });

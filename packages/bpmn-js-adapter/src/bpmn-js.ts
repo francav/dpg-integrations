@@ -49,21 +49,56 @@ export interface OverlaysService {
   remove(filter: { id?: string; element?: string; type?: string }): void;
 }
 
-/** The `canvas` service: CSS marker classes on elements. */
+/**
+ * The `canvas` service: CSS marker classes on elements, plus optional viewport
+ * navigation. `addMarker`/`removeMarker`/`hasMarker` are long-stable on every
+ * diagram-js; the navigation methods (`scrollToElement`, `zoom`, `viewbox`) are
+ * present on bpmn-js but are typed optional here so a bare/older diagram-js host
+ * (or a fake) still satisfies the contract.
+ */
 export interface CanvasService {
   addMarker(element: string | DiagramElement, marker: string): void;
   removeMarker(element: string | DiagramElement, marker: string): void;
   hasMarker(element: string | DiagramElement, marker: string): boolean;
+  /** Scroll/pan the viewport so the element is in view. diagram-js ≥ 7. */
+  scrollToElement?(element: string | DiagramElement, padding?: number): void;
+  zoom?(newScale?: number | string, center?: unknown): number;
+  viewbox?(box?: unknown): unknown;
+}
+
+/**
+ * The `selection` service (diagram-js): read and set the canvas selection.
+ * `select(null)` clears the selection. Tolerant: a bare host may omit it, so
+ * {@link DpgCanvasSelection} resolves it lazily and no-ops when absent.
+ */
+export interface SelectionService {
+  select(element: DiagramElement | string | null): void;
+  get(): DiagramElement[];
+}
+
+/**
+ * The `eventBus` service (diagram-js), minimal read surface: subscribe and
+ * unsubscribe to canvas events such as `selection.changed`.
+ */
+export interface EventBusService {
+  on(event: string, callback: (event: unknown) => void): void;
+  off(event: string, callback: (event: unknown) => void): void;
 }
 
 /**
  * The narrow contract the binding needs from a bpmn-js instance: a service
  * locator. `BpmnModeler`, `BpmnViewer`, `NavigatedViewer`, and a bare
  * diagram-js `Diagram` all satisfy this.
+ *
+ * `selection` and `eventBus` are resolved tolerantly by
+ * {@link DpgCanvasSelection} (a bare host may not register them), so they are
+ * declared as overloads but never assumed present.
  */
 export interface DiagramServices {
   get<T = unknown>(name: string): T;
   get(name: "overlays"): OverlaysService;
   get(name: "canvas"): CanvasService;
   get(name: "elementRegistry"): ElementRegistryService;
+  get(name: "selection"): SelectionService;
+  get(name: "eventBus"): EventBusService;
 }

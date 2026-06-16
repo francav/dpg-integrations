@@ -9,8 +9,8 @@
  * Kept as plain data (no host import) so it is trivially unit-testable and can
  * be serialised into the plugin's package manifest. The plugin is a *thin
  * shell*: it carries no governance logic of its own — it registers a bpmn-js
- * module and mounts the L3 panels (`@dpg/components`) bound to the canvas via
- * `@dpg/bpmn-js-adapter`, defaulting to a Camunda runtime profile.
+ * module and mounts the L3 panels (`@francav/components`) bound to the canvas via
+ * `@francav/bpmn-js-adapter`, defaulting to a Camunda runtime profile.
  */
 
 /** Stable identifier for this plugin's bpmn-js module / overlays / events. */
@@ -23,7 +23,7 @@ export const PLUGIN_NAME = "DPG Governance";
  * Runtime profile this plugin defaults to. The plugin targets the Camunda
  * Desktop Modeler, whose diagrams are Camunda-7 (`bpmn-js` + camunda moddle),
  * so the determinism result is computed against the `camunda-7` reference
- * profile shipped by `@dpg/profiles` unless the host overrides it.
+ * profile shipped by `@francav/profiles` unless the host overrides it.
  */
 export const DEFAULT_PROFILE_ID = "camunda-7";
 

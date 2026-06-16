@@ -5,7 +5,7 @@
  * Minimal, version-tolerant structural typings for the slice of the bpmn-js /
  * diagram-js *editor* API the reference modeler drives.
  *
- * The reference modeler is the editing counterpart to `@dpg/bpmn-js-adapter`:
+ * The reference modeler is the editing counterpart to `@francav/bpmn-js-adapter`:
  * the adapter only reads a diagram (overlays + markers), whereas the modeler
  * lets a user *edit* a process and re-classifies it on every change. It needs
  * three things beyond the adapter's read-only services:
@@ -23,7 +23,7 @@ import type {
   DiagramServices,
   ElementRegistryService,
   OverlaysService,
-} from "@dpg/bpmn-js-adapter";
+} from "@francav/bpmn-js-adapter";
 
 /** A diagram-js event payload. Structural — only the bits we read. */
 export interface DiagramEvent {

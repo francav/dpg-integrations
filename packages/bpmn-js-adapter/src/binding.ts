@@ -17,7 +17,7 @@
  * services (see {@link ./bpmn-js}), so it is tolerant of the bpmn-js version.
  */
 
-import type { AnalysisResult, Finding, FindingSeverity } from "@dpg/components";
+import type { AnalysisResult, Finding, FindingSeverity } from "@francav/components";
 import type {
   CanvasService,
   DiagramServices,

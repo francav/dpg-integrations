@@ -6,15 +6,15 @@
  *
  * A lean, self-contained modeler that lets a user *edit* a BPMN process and
  * keeps its DPG governance classification live: every edit re-classifies the
- * model and re-paints the L3 governance panels (`@dpg/components`) plus the
- * canvas overlays/markers (`@dpg/bpmn-js-adapter`).
+ * model and re-paints the L3 governance panels (`@francav/components`) plus the
+ * canvas overlays/markers (`@francav/bpmn-js-adapter`).
  *
  * It is built directly on the bpmn-js canvas adapter rather than a bespoke
  * canvas, and is deliberately governance-only: no AI assistance, no process
  * execution, no form design. Classification is injected (see {@link Classifier}),
  * so the modeler stays free of a hard, build-time compiler dependency. The
  * shipping classifier ({@link createCompilerClassifier}) is backed by the real
- * `@dpg/compiler-browser` engine (loaded via an optional dynamic import); a
+ * `@francav/compiler-browser` engine (loaded via an optional dynamic import); a
  * bundled dependency-free {@link sampleClassifier} remains available as a
  * test/demo fallback fixture only.
  *
@@ -28,7 +28,7 @@
  * const panels = document.querySelector("#panels")!;
  * const session = startReferenceModeler(editor, panels, createCompilerClassifier());
  * // edit the diagram → panels + overlays re-classify automatically via the
- * // real @dpg/compiler-browser engine
+ * // real @francav/compiler-browser engine
  * // later: session.destroy();
  * ```
  */

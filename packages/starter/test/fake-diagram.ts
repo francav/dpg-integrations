@@ -8,7 +8,7 @@
  * pass (the adapter package carries the real-bpmn-js harness test).
  */
 
-import type { DiagramServices } from "@dpg/bpmn-js-adapter";
+import type { DiagramServices } from "@francav/bpmn-js-adapter";
 
 interface RecordedOverlay {
   id: string;

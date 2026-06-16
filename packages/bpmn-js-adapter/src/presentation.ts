@@ -5,15 +5,19 @@
  * Presentation mapping for the bpmn-js canvas surface.
  *
  * The colours and short labels mirror the canonical L3 view-model vocabulary
- * (`@dpg/components` `AXIS_Y_ROWS` / `AXIS_X_ROWS`) so the diagram overlays read
+ * (`@francav/components` `AXIS_Y_ROWS` / `AXIS_X_ROWS`) so the diagram overlays read
  * the same as every other DPG surface. They are duplicated here rather than
- * imported at runtime because `@dpg/components`' root entry pulls in the custom
+ * imported at runtime because `@francav/components`' root entry pulls in the custom
  * elements (which require a DOM `HTMLElement`); the binding stays DOM-light and
  * usable from a bare diagram-js host, so it only takes a type-only dependency on
  * the view-model.
  */
 
-import type { AxisXClassification, AxisYClassification, FindingSeverity } from "@dpg/components";
+import type {
+  AxisXClassification,
+  AxisYClassification,
+  FindingSeverity,
+} from "@francav/components";
 
 export interface AxisYStyle {
   /** Border colour applied as the Axis-Y determinism ring. */

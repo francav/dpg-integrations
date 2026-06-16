@@ -2,7 +2,7 @@
 // Copyright 2026 Victor França
 
 import { describe, expect, it } from "vitest";
-import type { AnalysisResult } from "@dpg/components";
+import type { AnalysisResult } from "@francav/components";
 import { DpgCanvasBinding, bindAnalysisToCanvas } from "./index.js";
 import { axisYMarkerClass } from "./overlay-html.js";
 import { FakeDiagram } from "../test/fake-diagram.js";

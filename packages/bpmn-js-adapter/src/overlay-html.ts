@@ -9,7 +9,11 @@
  */
 
 import { AXIS_X_STYLE, AXIS_Y_STYLE, FINDING_STYLE } from "./presentation.js";
-import type { AxisXClassification, AxisYClassification, FindingSeverity } from "@dpg/components";
+import type {
+  AxisXClassification,
+  AxisYClassification,
+  FindingSeverity,
+} from "@francav/components";
 
 /** CSS class prefix for every node this adapter injects (markers + overlays). */
 export const DPG_CLASS_PREFIX = "dpg";

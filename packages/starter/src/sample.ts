@@ -7,16 +7,16 @@
  * These hand-authored sample inputs exist only so a fresh `git clone` →
  * `npm install` → `npm start` renders something immediately (the starter's
  * done-criterion) and so the starter's tests have a deterministic input. Real
- * output comes from the DPG compiler (`@dpg/compiler-browser` /
- * `@dpg/compiler-node`); a real consumer replaces these with their own compiler
+ * output comes from the DPG compiler (`@francav/compiler-browser` /
+ * `@francav/compiler-node`); a real consumer replaces these with their own compiler
  * result and their own BPMN XML. `canvas.ts` / `headless.ts` already accept any
  * `CompilerResultInput`, so swapping in real output requires no code change.
  */
 
-import type { CompilerResultInput } from "@dpg/components";
+import type { CompilerResultInput } from "@francav/components";
 
 /**
- * A compiler result, structurally `@dpg/compiler-core`'s `CompilerResult`.
+ * A compiler result, structurally `@francav/compiler-core`'s `CompilerResult`.
  *
  * Models a tiny loan-decision process: a start event, an external scoring
  * service task (runtime-bound, externally coupled, undocumented contract) and an

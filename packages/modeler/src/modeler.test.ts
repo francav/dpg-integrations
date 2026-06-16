@@ -13,8 +13,8 @@
 
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from "vitest";
-import { axisYMarkerClass } from "@dpg/bpmn-js-adapter";
-import type { AnalysisResult } from "@dpg/components";
+import { axisYMarkerClass } from "@francav/bpmn-js-adapter";
+import type { AnalysisResult } from "@francav/components";
 import { startReferenceModeler, MODELER_PANEL_TAGS } from "./modeler.js";
 import { SAMPLE_BPMN, sampleClassifier } from "./sample.js";
 import { FakeEditor } from "../test/fake-editor.js";

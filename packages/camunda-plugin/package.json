@@ -26,8 +26,8 @@
     "esbuild": "^0.27"
   },
   "dependencies": {
-    "@dpg/bpmn-js-adapter": "*",
-    "@dpg/components": "git+https://github.com/francav/dpg-components.git#v0.1.0",
+    "@francav/bpmn-js-adapter": "*",
+    "@francav/components": "git+https://github.com/francav/dpg-components.git#v0.1.1",
     "dpg-modeler": "*"
   }
 }

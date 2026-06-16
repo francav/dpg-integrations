@@ -10,8 +10,8 @@
  *  - canvas ({@link ./canvas}) — the same view-model rendered as L3 panels plus
  *    bpmn-js overlays in the browser.
  *
- * Both consume `@dpg/components`' `mapCompilerResult`; the canvas variant adds
- * `@dpg/bpmn-js-adapter`. Copy this package, swap in your own compiler output and
+ * Both consume `@francav/components`' `mapCompilerResult`; the canvas variant adds
+ * `@francav/bpmn-js-adapter`. Copy this package, swap in your own compiler output and
  * BPMN, and you have a working integration. See QUICKSTART.md.
  */
 

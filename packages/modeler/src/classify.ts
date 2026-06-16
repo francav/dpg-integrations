@@ -7,8 +7,8 @@
  * The modeler is governance-only and self-contained: it does not hard-depend on
  * a compiler. Instead it takes an injectable {@link Classifier} — a function
  * from the current BPMN XML to a compiler result (structurally
- * `@dpg/compiler-core`'s `CompilerResult`). A real integration wires in
- * `@dpg/compiler-browser`; the bundled {@link ./sample} ships a small dependency
+ * `@francav/compiler-core`'s `CompilerResult`). A real integration wires in
+ * `@francav/compiler-browser`; the bundled {@link ./sample} ships a small dependency
  * -free classifier so the modeler runs out of the box.
  *
  * Keeping classification injectable is what lets the modeler stay in L4 without
@@ -16,7 +16,7 @@
  * with a deterministic stub.
  */
 
-import type { CompilerResultInput } from "@dpg/components";
+import type { CompilerResultInput } from "@francav/components";
 
 /**
  * Classify a process from its BPMN 2.0 XML, producing a compiler result the

@@ -9,7 +9,7 @@ Early development (0.1.0). APIs are unstable and subject to change.
 
 ## Packages
 
-- `@dpg/bpmn-js-adapter` — bpmn-js canvas binding (overlays and markers from analysis output)
+- `@francav/bpmn-js-adapter` — bpmn-js canvas binding (overlays and markers from analysis output)
 - `dpg-camunda-plugin` — Camunda Modeler plugin
 - `dpg-starter` — lean starter template
 - `dpg-modeler` — governance-only reference modeler

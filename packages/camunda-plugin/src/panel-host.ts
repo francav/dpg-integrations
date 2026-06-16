@@ -5,21 +5,21 @@
  * {@link DpgPanelHost} — mounts the DPG governance UI for a single diagram.
  *
  * It is the thin glue the plugin needs and nothing more:
- *  - registers the L3 custom elements (`@dpg/components`) once,
+ *  - registers the L3 custom elements (`@francav/components`) once,
  *  - mounts the governance matrix, findings, badge and profile/policy selector
  *    panels into a host container,
  *  - binds the same {@link AnalysisResult} onto the bpmn-js canvas via
- *    `@dpg/bpmn-js-adapter`, and
+ *    `@francav/bpmn-js-adapter`, and
  *  - seeds the profile/policy selector from the Camunda defaults.
  *
  * No governance logic lives here: the {@link AnalysisResult} is produced
- * upstream (by `@dpg/components`' `mapCompilerResult`) and handed in.
+ * upstream (by `@francav/components`' `mapCompilerResult`) and handed in.
  */
 
-import { DpgCanvasBinding, dpgStylesheet } from "@dpg/bpmn-js-adapter";
-import type { DiagramServices } from "@dpg/bpmn-js-adapter";
-import { defineDpgElements } from "@dpg/components";
-import type { AnalysisResult, SelectorOption } from "@dpg/components";
+import { DpgCanvasBinding, dpgStylesheet } from "@francav/bpmn-js-adapter";
+import type { DiagramServices } from "@francav/bpmn-js-adapter";
+import { defineDpgElements } from "@francav/components";
+import type { AnalysisResult, SelectorOption } from "@francav/components";
 import { DEFAULT_POLICY_ID, DEFAULT_PROFILE_ID, PLUGIN_ID } from "./manifest.js";
 
 /** The L3 panel tag names this host mounts, in display order. */

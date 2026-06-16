@@ -52,7 +52,7 @@ export interface RegistrationReport {
  * Idempotent in spirit: it only calls the helper methods the host actually
  * exposes, and returns a report of what it registered. The bpmn-js module it
  * registers is a no-op marker service (`__init__`) keyed by {@link PLUGIN_ID};
- * the actual decorations are painted by `@dpg/bpmn-js-adapter` once a result is
+ * the actual decorations are painted by `@francav/bpmn-js-adapter` once a result is
  * available, via {@link DpgPanelHost}.
  */
 export function registerDpgPlugin(

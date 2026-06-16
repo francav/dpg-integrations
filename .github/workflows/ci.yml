@@ -12,7 +12,7 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      # @dpg/components is consumed as a public git dependency (temporary, until a
+      # @francav/components is consumed as a public git dependency (temporary, until a
       # registry is in place). npm records the ssh form in the lockfile's "resolved"
       # field; rewrite it to anonymous HTTPS so the public repo clones without an
       # SSH key. No token needed.

@@ -22,7 +22,7 @@
  * reference modeler and this plugin.
  *
  * Analysis engine: governance is produced by the REAL DPG compiler via
- * `createCompilerClassifier()`, which is backed by `@dpg/compiler-browser`
+ * `createCompilerClassifier()`, which is backed by `@francav/compiler-browser`
  * (loaded through an optional dynamic import). esbuild inlines that dynamic
  * import into `client.js` at `build:plugin` time, so the compiler must be
  * resolvable when the plugin bundle is built. Classification failures surface

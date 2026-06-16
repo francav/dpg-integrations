@@ -2,11 +2,11 @@
 // Copyright 2026 Victor França
 
 /**
- * @dpg/bpmn-js-adapter — bind a DPG governance analysis onto a bpmn-js canvas.
+ * @francav/bpmn-js-adapter — bind a DPG governance analysis onto a bpmn-js canvas.
  *
  * Given a bpmn-js instance (`BpmnModeler`/`BpmnViewer`/`NavigatedViewer`, or any
  * diagram-js host exposing the `overlays`, `canvas`, and `elementRegistry`
- * services) and an {@link AnalysisResult} from `@dpg/components`, this paints:
+ * services) and an {@link AnalysisResult} from `@francav/components`, this paints:
  *  - an Axis-Y determinism ring (CSS marker) on each classified element,
  *  - an Axis-X coupling badge (overlay), and
  *  - a per-element finding marker (overlay, worst severity).
@@ -17,7 +17,7 @@
  * @example
  * ```ts
  * import BpmnViewer from "bpmn-js/lib/NavigatedViewer";
- * import { bindAnalysisToCanvas, dpgStylesheet } from "@dpg/bpmn-js-adapter";
+ * import { bindAnalysisToCanvas, dpgStylesheet } from "@francav/bpmn-js-adapter";
  *
  * document.head.insertAdjacentHTML("beforeend", `<style>${dpgStylesheet()}</style>`);
  * const viewer = new BpmnViewer({ container: "#canvas" });

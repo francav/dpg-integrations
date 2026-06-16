@@ -4,14 +4,14 @@
 /**
  * Node DOM guard for the headless variant.
  *
- * `@dpg/components` is a single entry point that bundles both the
+ * `@francav/components` is a single entry point that bundles both the
  * framework-neutral view-model (which the headless path uses) and the L3 custom
  * elements (which extend `HTMLElement` at module-evaluation time). Importing it
  * in a plain Node process therefore needs `HTMLElement`/`customElements` to at
  * least exist, even though the headless path never constructs an element.
  *
  * This installs inert stand-ins **only when no DOM is present** (i.e. real
- * browsers and jsdom are untouched). It must be imported before `@dpg/components`
+ * browsers and jsdom are untouched). It must be imported before `@francav/components`
  * — ES module imports are hoisted, so it lives in its own module and is imported
  * first by {@link ./headless}.
  */

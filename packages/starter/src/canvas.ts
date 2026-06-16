@@ -7,19 +7,19 @@
  *
  * This is the browser counterpart to the headless variant ({@link ./headless}):
  *  - it maps a compiler result onto the {@link AnalysisResult} view-model,
- *  - registers and mounts the L3 custom elements (`@dpg/components`), and
+ *  - registers and mounts the L3 custom elements (`@francav/components`), and
  *  - paints Axis-Y rings / Axis-X badges / finding markers onto the diagram via
- *    `@dpg/bpmn-js-adapter`.
+ *    `@francav/bpmn-js-adapter`.
  *
  * It only needs a diagram-js host (a bpmn-js `Viewer`/`Modeler` instance) and a
  * panel container; it stays version-tolerant by going through the adapter's
  * structural service typings rather than importing bpmn-js directly.
  */
 
-import { DpgCanvasBinding, dpgStylesheet } from "@dpg/bpmn-js-adapter";
-import type { DiagramServices } from "@dpg/bpmn-js-adapter";
-import { defineDpgElements } from "@dpg/components";
-import type { AnalysisResult, CompilerResultInput, DiagramElementIndex } from "@dpg/components";
+import { DpgCanvasBinding, dpgStylesheet } from "@francav/bpmn-js-adapter";
+import type { DiagramServices } from "@francav/bpmn-js-adapter";
+import { defineDpgElements } from "@francav/components";
+import type { AnalysisResult, CompilerResultInput, DiagramElementIndex } from "@francav/components";
 import { analyze } from "./headless.js";
 
 /** The L3 panel tags the canvas variant mounts, in display order. */

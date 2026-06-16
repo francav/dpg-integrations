@@ -4,9 +4,9 @@
 /**
  * Headless starter variant — the smallest possible DPG integration.
  *
- * Takes a compiler result (structurally `@dpg/compiler-core`'s `CompilerResult`),
+ * Takes a compiler result (structurally `@francav/compiler-core`'s `CompilerResult`),
  * maps it onto the framework-neutral {@link AnalysisResult} view-model with
- * `@dpg/components`' `mapCompilerResult`, and renders a plain-text governance
+ * `@francav/components`' `mapCompilerResult`, and renders a plain-text governance
  * report. No DOM, no UI framework, no bpmn-js — runnable anywhere Node runs.
  *
  * This is the ~50-line "render governance from compiler output" core the
@@ -14,11 +14,11 @@
  * components and bpmn-js overlays on top of the very same view-model.
  */
 
-// Must precede the @dpg/components import: it bundles DOM-bound custom elements,
+// Must precede the @francav/components import: it bundles DOM-bound custom elements,
 // so a plain Node process needs an inert HTMLElement to evaluate the module.
 import "./node-dom-guard.js";
-import { mapCompilerResult } from "@dpg/components";
-import type { AnalysisResult, CompilerResultInput, DiagramElementIndex } from "@dpg/components";
+import { mapCompilerResult } from "@francav/components";
+import type { AnalysisResult, CompilerResultInput, DiagramElementIndex } from "@francav/components";
 
 /** Map a compiler result onto the view-model the report (and UI) render. */
 export function analyze(

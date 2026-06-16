@@ -17,7 +17,7 @@
 import "../test/svg-jsdom-polyfill.js";
 
 import { beforeAll, afterEach, describe, expect, it } from "vitest";
-import { axisYMarkerClass } from "@dpg/bpmn-js-adapter";
+import { axisYMarkerClass } from "@francav/bpmn-js-adapter";
 import { startReferenceModeler } from "./modeler.js";
 import { SAMPLE_BPMN, sampleClassifier } from "./sample.js";
 import type { EditorServices } from "./editor.js";

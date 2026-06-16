@@ -81,7 +81,7 @@ The plugin ships **no compiler**. Classification uses `dpg-modeler`'s
 dependency-free `sampleClassifier` — a lightweight heuristic over the BPMN XML
 (external service task → runtime-bound + missing-contract finding; gateway →
 deterministic; etc.). To ship real governance, swap `sampleClassifier` in
-`client/index.jsx` for a classifier backed by `@dpg/compiler-browser` — it is
+`client/index.jsx` for a classifier backed by `@francav/compiler-browser` — it is
 the same `(xml) => CompilerResult` contract, so nothing else changes.
 
 ## Caveats

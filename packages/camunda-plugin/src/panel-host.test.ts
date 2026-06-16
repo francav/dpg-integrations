@@ -4,7 +4,7 @@
 // @vitest-environment jsdom
 
 import { afterEach, describe, expect, it } from "vitest";
-import { axisYMarkerClass } from "@dpg/bpmn-js-adapter";
+import { axisYMarkerClass } from "@francav/bpmn-js-adapter";
 import { DpgPanelHost, PANEL_TAGS } from "./panel-host.js";
 import { DEFAULT_POLICY_ID, DEFAULT_PROFILE_ID, PLUGIN_ID } from "./manifest.js";
 import { FakeDiagram, GATEWAY_ID, SAMPLE_ANALYSIS, TASK_ID } from "../test/fixtures.js";

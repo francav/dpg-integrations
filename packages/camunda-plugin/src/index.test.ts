@@ -2,7 +2,7 @@
 // Copyright 2026 Victor França
 
 // The public barrel re-exports the DOM-mounting panel host, whose dependency
-// (`@dpg/components`) references `HTMLElement` at module load, so the barrel
+// (`@francav/components`) references `HTMLElement` at module load, so the barrel
 // smoke-test runs under jsdom.
 // @vitest-environment jsdom
 

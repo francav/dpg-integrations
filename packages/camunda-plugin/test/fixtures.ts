@@ -7,7 +7,7 @@
  * {@link AnalysisResult} matching its element ids.
  */
 
-import type { AnalysisResult } from "@dpg/components";
+import type { AnalysisResult } from "@francav/components";
 import type {
   CanvasService,
   DiagramElement,
@@ -15,7 +15,7 @@ import type {
   ElementRegistryService,
   OverlayAttrs,
   OverlaysService,
-} from "@dpg/bpmn-js-adapter";
+} from "@francav/bpmn-js-adapter";
 
 export const TASK_ID = "Task_review";
 export const GATEWAY_ID = "Gateway_route";

@@ -9,14 +9,14 @@
  *  - declares a plugin {@link PLUGIN_MANIFEST} (id, name, Camunda defaults),
  *  - registers a bpmn-js module + client extension with the modeler host
  *    ({@link registerDpgPlugin}), and
- *  - mounts the L3 panels (`@dpg/components`) and binds the analysis onto the
- *    canvas (`@dpg/bpmn-js-adapter`) for a diagram ({@link DpgPanelHost}),
+ *  - mounts the L3 panels (`@francav/components`) and binds the analysis onto the
+ *    canvas (`@francav/bpmn-js-adapter`) for a diagram ({@link DpgPanelHost}),
  *    defaulting to the Camunda runtime profile.
  *
  * @example
  * ```ts
  * import { registerDpgPlugin, DpgPanelHost } from "dpg-camunda-plugin";
- * import { mapCompilerResult } from "@dpg/components";
+ * import { mapCompilerResult } from "@francav/components";
  *
  * // 1. register with the modeler host (client plugin entry):
  * registerDpgPlugin(modelerPluginHelpers);

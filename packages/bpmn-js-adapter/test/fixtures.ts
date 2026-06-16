@@ -6,7 +6,7 @@
  * view-model whose element ids line up with the diagram's shape ids.
  */
 
-import type { AnalysisResult } from "@dpg/components";
+import type { AnalysisResult } from "@francav/components";
 
 /**
  * Minimal but real BPMN 2.0 with DI: start → service task → exclusive gateway →

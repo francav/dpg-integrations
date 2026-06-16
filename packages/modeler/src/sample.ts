@@ -10,8 +10,8 @@
  *    scans the BPMN XML and emits a compiler-shaped result.
  *
  * The shipping classifier is {@link createCompilerClassifier} (backed by the
- * real `@dpg/compiler-browser` engine). This file's {@link sampleClassifier} is
- * intentionally a lightweight heuristic, NOT the real `@dpg/compiler-*`: it
+ * real `@francav/compiler-browser` engine). This file's {@link sampleClassifier} is
+ * intentionally a lightweight heuristic, NOT the real `@francav/compiler-*`: it
  * exists ONLY so the modeler's edit→classify loop is observable in unit tests
  * (`modeler.test.ts`, `harness.test.ts`) and demos without wiring a compiler,
  * and as a last-resort fallback when the compiler is unavailable. Do not wire it
@@ -21,7 +21,7 @@
  * adds a deterministic, self-contained one.
  */
 
-import type { CompilerDeterminismEntryInput, CompilerResultInput } from "@dpg/components";
+import type { CompilerDeterminismEntryInput, CompilerResultInput } from "@francav/components";
 import type { Classifier } from "./classify.js";
 
 /** Minimal but real editable BPMN 2.0 (with DI): start → score → decide → ends. */

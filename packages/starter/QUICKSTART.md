@@ -25,10 +25,10 @@ report — proof the starter works end to end before you wire in your own data.
 The whole headless integration is: take a compiler result, map it onto the view-model, render it.
 
 ```ts
-import { mapCompilerResult } from "@dpg/components";
+import { mapCompilerResult } from "@francav/components";
 
-// `compilerResult` is the output of @dpg/compiler-node / @dpg/compiler-browser.
-// It is structurally @dpg/compiler-core's CompilerResult, so it passes straight in.
+// `compilerResult` is the output of @francav/compiler-node / @francav/compiler-browser.
+// It is structurally @francav/compiler-core's CompilerResult, so it passes straight in.
 const analysis = mapCompilerResult(compilerResult);
 
 console.log(`Process: ${analysis.process.id}`);
@@ -44,8 +44,8 @@ The starter wraps exactly this in `src/headless.ts` (`analyze`, `renderReport`,
 
 ## Canvas variant
 
-The canvas variant adds the L3 custom elements (`@dpg/components`) and paints the analysis onto a
-live bpmn-js canvas via `@dpg/bpmn-js-adapter` — all from the same view-model.
+The canvas variant adds the L3 custom elements (`@francav/components`) and paints the analysis onto a
+live bpmn-js canvas via `@francav/bpmn-js-adapter` — all from the same view-model.
 
 ```ts
 import BpmnViewer from "bpmn-js/lib/NavigatedViewer.js";

@@ -3,18 +3,18 @@
 
 /**
  * The real DPG classifier: a {@link Classifier} backed by the
- * `@dpg/compiler-browser` engine.
+ * `@francav/compiler-browser` engine.
  *
  * This is the shipping classifier for the reference modeler and the Camunda
  * plugin. It exports the editor's BPMN 2.0 XML, hands it to
  * `compileModelInBrowser({ modelId, bpmnXml })`, and returns the real
  * `CompilerResult`. That result is a structural superset of
- * `@dpg/components`' {@link CompilerResultInput} (same
+ * `@francav/components`' {@link CompilerResultInput} (same
  * `metadata`/`structuralFindings`/`semanticFindings`/`determinismMap`/
  * `runtimeDependencyMap`/`summary`, plus extra fields), so it passes straight to
  * `mapCompilerResult` with no adapter.
  *
- * **Optional dynamic dependency.** `@dpg/compiler-browser` is loaded via a
+ * **Optional dynamic dependency.** `@francav/compiler-browser` is loaded via a
  * dynamic `import()` and is NOT a build-time dependency of this package: the
  * slice we use is typed locally, so `tsc -b` / lint / test stay green without
  * the compiler in the dependency graph. The package only needs to be resolvable
@@ -26,11 +26,11 @@
  * fallback fixture only — it is no longer the shipping default.
  */
 
-import type { CompilerResultInput } from "@dpg/components";
+import type { CompilerResultInput } from "@francav/components";
 import type { Classifier } from "./classify.js";
 
 /**
- * The slice of `@dpg/compiler-browser` we use, typed locally so the build does
+ * The slice of `@francav/compiler-browser` we use, typed locally so the build does
  * not need the package present. Mirrors `compileModelInBrowser`'s signature;
  * the real `CompilerResult` it returns is structurally a {@link CompilerResultInput}.
  */
@@ -42,7 +42,7 @@ interface CompilerBrowserModule {
 }
 
 /** The module specifier loaded dynamically — kept here so it is swappable. */
-const COMPILER_MODULE = "@dpg/compiler-browser";
+const COMPILER_MODULE = "@francav/compiler-browser";
 
 export interface CompilerClassifierOptions {
   /**
@@ -85,7 +85,7 @@ async function loadCompiler(): Promise<CompilerBrowserModule> {
 
 /**
  * Build the real DPG classifier. Returns an async {@link Classifier} that, on
- * each call, derives a model id, lazily loads `@dpg/compiler-browser`, and
+ * each call, derives a model id, lazily loads `@francav/compiler-browser`, and
  * returns `compileModelInBrowser({ modelId, bpmnXml })`. The result is
  * structurally a {@link CompilerResultInput} and is returned as-is.
  *

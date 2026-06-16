@@ -9,22 +9,22 @@
  * injectable {@link Classifier}, it lets a user *edit* a process and keeps the
  * governance view live:
  *  - it mounts the L3 governance panels (determinism badge, matrix, findings)
- *    beside the canvas via `@dpg/components`,
+ *    beside the canvas via `@francav/components`,
  *  - it subscribes to the editor's change events, and on each edit it exports
  *    the current XML, classifies it, maps the result onto the
  *    {@link AnalysisResult} view-model, and re-paints both the panels and the
- *    canvas overlays/markers via `@dpg/bpmn-js-adapter`.
+ *    canvas overlays/markers via `@francav/bpmn-js-adapter`.
  *
  * It is deliberately governance-only: no AI assistance, no process execution,
  * no form design — just edit + classify. All governance logic lives upstream
- * (the injected classifier + `@dpg/components`' adapter); this class is the
+ * (the injected classifier + `@francav/components`' adapter); this class is the
  * thin edit→classify→render loop that ties them together, built directly on the
  * canvas adapter rather than a bespoke canvas.
  */
 
-import { DpgCanvasBinding, dpgStylesheet } from "@dpg/bpmn-js-adapter";
-import { defineDpgElements, mapCompilerResult } from "@dpg/components";
-import type { AnalysisResult, DiagramElementIndex } from "@dpg/components";
+import { DpgCanvasBinding, dpgStylesheet } from "@francav/bpmn-js-adapter";
+import { defineDpgElements, mapCompilerResult } from "@francav/components";
+import type { AnalysisResult, DiagramElementIndex } from "@francav/components";
 import type { Classifier } from "./classify.js";
 import type { DiagramEvent, EditorServices, EventBusService } from "./editor.js";
 

@@ -17,14 +17,17 @@
  *     markers onto the canvas, and re-classifies on every edit.
  *
  * Why reuse `dpg-modeler` rather than mount panels here directly: the modeler
- * package already owns the edit→classify→render loop and a dependency-free
- * `sampleClassifier`. Reusing it keeps the Camunda plugin a thin host and keeps
- * the live behaviour identical across the reference modeler and this plugin.
+ * package already owns the edit→classify→render loop. Reusing it keeps the
+ * Camunda plugin a thin host and keeps the live behaviour identical across the
+ * reference modeler and this plugin.
  *
- * Analysis seam: `sampleClassifier` is a lightweight heuristic over the BPMN
- * XML, NOT the real DPG compiler. To ship real governance, swap it for a
- * classifier backed by `@dpg/compiler-browser` (same `(xml) => CompilerResult`
- * contract) — no other change here is needed.
+ * Analysis engine: governance is produced by the REAL DPG compiler via
+ * `createCompilerClassifier()`, which is backed by `@dpg/compiler-browser`
+ * (loaded through an optional dynamic import). esbuild inlines that dynamic
+ * import into `client.js` at `build:plugin` time, so the compiler must be
+ * resolvable when the plugin bundle is built. Classification failures surface
+ * through the `onError` callback below (logged to the renderer console); the
+ * panels simply keep their last good state.
  *
  * `camunda-modeler-plugin-helpers` (and its `/react` + `/components` subpaths)
  * are bundled in: their entries are thin shims that read host globals
@@ -40,7 +43,7 @@ import { Fill, Overlay } from "camunda-modeler-plugin-helpers/components";
 // Import from the BUILT library output (tsc -b must run first) rather than the
 // bare package name, so bundling does not depend on the workspace self-symlink.
 import { registerDpgPlugin, PLUGIN_NAME } from "../dist/index.js";
-import { startReferenceModeler, sampleClassifier } from "dpg-modeler";
+import { startReferenceModeler, createCompilerClassifier } from "dpg-modeler";
 
 // (1) Register the DPG bpmn-js module on every bpmn-js instance the Modeler
 // creates. `registerDpgPlugin` only calls the helpers the host exposes.
@@ -101,9 +104,14 @@ class DpgGovernance extends PureComponent {
 
   _start() {
     if (this._session || !this._modeler || !this._container) return;
-    this._session = startReferenceModeler(this._modeler, this._container, sampleClassifier, {
-      onError: (error) => console.error("[DPG Governance] classification failed:", error),
-    });
+    this._session = startReferenceModeler(
+      this._modeler,
+      this._container,
+      createCompilerClassifier(),
+      {
+        onError: (error) => console.error("[DPG Governance] classification failed:", error),
+      },
+    );
   }
 
   _teardown() {

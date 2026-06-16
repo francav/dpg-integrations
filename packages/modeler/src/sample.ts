@@ -2,20 +2,23 @@
 // Copyright 2026 Victor França
 
 /**
- * Self-contained sample so the reference modeler runs with zero external deps.
+ * Dependency-free FALLBACK / TEST / DEMO fixtures — **never the shipping default.**
  *
  * Ships:
  *  - {@link SAMPLE_BPMN}: a minimal but real editable BPMN 2.0 process, and
  *  - {@link sampleClassifier}: a tiny, dependency-free {@link Classifier} that
  *    scans the BPMN XML and emits a compiler-shaped result.
  *
- * The sample classifier is intentionally a lightweight heuristic, NOT the real
- * `@dpg/compiler-*`: it exists so the modeler's edit→classify loop is observable
- * out of the box (and unit-testable) without wiring a compiler. A real
- * integration injects `@dpg/compiler-browser` in its place. The heuristic is
- * faithful enough to react to edits — adding an external service task adds a
- * runtime-bound, externally-coupled evaluation point and a missing-contract
- * finding; adding an exclusive gateway adds a deterministic, self-contained one.
+ * The shipping classifier is {@link createCompilerClassifier} (backed by the
+ * real `@dpg/compiler-browser` engine). This file's {@link sampleClassifier} is
+ * intentionally a lightweight heuristic, NOT the real `@dpg/compiler-*`: it
+ * exists ONLY so the modeler's edit→classify loop is observable in unit tests
+ * (`modeler.test.ts`, `harness.test.ts`) and demos without wiring a compiler,
+ * and as a last-resort fallback when the compiler is unavailable. Do not wire it
+ * as a production default. The heuristic is faithful enough to react to edits —
+ * adding an external service task adds a runtime-bound, externally-coupled
+ * evaluation point and a missing-contract finding; adding an exclusive gateway
+ * adds a deterministic, self-contained one.
  */
 
 import type { CompilerDeterminismEntryInput, CompilerResultInput } from "@dpg/components";

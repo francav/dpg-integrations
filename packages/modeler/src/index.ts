@@ -12,20 +12,23 @@
  * It is built directly on the bpmn-js canvas adapter rather than a bespoke
  * canvas, and is deliberately governance-only: no AI assistance, no process
  * execution, no form design. Classification is injected (see {@link Classifier}),
- * so the modeler stays free of a hard compiler dependency; a bundled
- * dependency-free sample classifier ({@link sampleClassifier}) lets it run with
- * no external deps out of the box.
+ * so the modeler stays free of a hard, build-time compiler dependency. The
+ * shipping classifier ({@link createCompilerClassifier}) is backed by the real
+ * `@dpg/compiler-browser` engine (loaded via an optional dynamic import); a
+ * bundled dependency-free {@link sampleClassifier} remains available as a
+ * test/demo fallback fixture only.
  *
  * @example
  * ```ts
  * import BpmnModeler from "bpmn-js/lib/Modeler";
- * import { startReferenceModeler, sampleClassifier, SAMPLE_BPMN } from "dpg-modeler";
+ * import { startReferenceModeler, createCompilerClassifier, SAMPLE_BPMN } from "dpg-modeler";
  *
  * const editor = new BpmnModeler({ container: "#canvas" });
  * await editor.importXML(SAMPLE_BPMN);
  * const panels = document.querySelector("#panels")!;
- * const session = startReferenceModeler(editor, panels, sampleClassifier);
- * // edit the diagram → panels + overlays re-classify automatically
+ * const session = startReferenceModeler(editor, panels, createCompilerClassifier());
+ * // edit the diagram → panels + overlays re-classify automatically via the
+ * // real @dpg/compiler-browser engine
  * // later: session.destroy();
  * ```
  */
@@ -44,6 +47,9 @@ export type {
 
 export type { Classifier } from "./classify.js";
 
+export { createCompilerClassifier } from "./compilerClassifier.js";
+export type { CompilerClassifierOptions } from "./compilerClassifier.js";
+
 export type {
   EditorServices,
   EventBusService,
@@ -53,4 +59,5 @@ export type {
   Unsubscribe,
 } from "./editor.js";
 
+// Test/demo fallback fixtures only — NOT the shipping default (see sample.ts).
 export { SAMPLE_BPMN, sampleClassifier } from "./sample.js";

@@ -2,12 +2,15 @@
 // Copyright 2026 Victor França
 
 /**
- * Self-contained sample inputs so the starter runs with zero setup.
+ * DEMO / FALLBACK fixtures — **not** real compiler output.
  *
- * A real consumer replaces these with their own compiler output (from
- * `@dpg/compiler-node`/`-browser`) and their own BPMN XML. They live here so a
- * fresh `git clone` → `npm install` → `npm start` renders something immediately,
- * which is the starter's done-criterion.
+ * These hand-authored sample inputs exist only so a fresh `git clone` →
+ * `npm install` → `npm start` renders something immediately (the starter's
+ * done-criterion) and so the starter's tests have a deterministic input. Real
+ * output comes from the DPG compiler (`@dpg/compiler-browser` /
+ * `@dpg/compiler-node`); a real consumer replaces these with their own compiler
+ * result and their own BPMN XML. `canvas.ts` / `headless.ts` already accept any
+ * `CompilerResultInput`, so swapping in real output requires no code change.
  */
 
 import type { CompilerResultInput } from "@dpg/components";

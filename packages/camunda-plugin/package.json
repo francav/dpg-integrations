@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@francav/bpmn-js-adapter": "*",
-    "@francav/components": "git+https://github.com/francav/dpg-components.git#v0.1.3",
+    "@francav/components": "git+https://github.com/francav/dpg-components.git#v0.1.4",
     "dpg-modeler": "*"
   }
 }

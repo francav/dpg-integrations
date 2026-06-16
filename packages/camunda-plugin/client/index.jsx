@@ -42,8 +42,18 @@ import { Fill, Overlay } from "camunda-modeler-plugin-helpers/components";
 
 // Import from the BUILT library output (tsc -b must run first) rather than the
 // bare package name, so bundling does not depend on the workspace self-symlink.
-import { registerDpgPlugin, PLUGIN_NAME } from "../dist/index.js";
-import { startReferenceModeler, createCompilerClassifier } from "dpg-modeler";
+import {
+  registerDpgPlugin,
+  PLUGIN_NAME,
+  DEFAULT_PROFILE_ID,
+  DEFAULT_POLICY_ID,
+} from "../dist/index.js";
+import {
+  startReferenceModeler,
+  createCompilerClassifier,
+  AVAILABLE_PROFILES,
+  AVAILABLE_POLICIES,
+} from "dpg-modeler";
 
 // (1) Register the DPG bpmn-js module on every bpmn-js instance the Modeler
 // creates. `registerDpgPlugin` only calls the helpers the host exposes.
@@ -109,6 +119,13 @@ class DpgGovernance extends PureComponent {
       this._container,
       createCompilerClassifier(),
       {
+        // Populate the inspector's selector with all reference packs and seed it
+        // with the plugin's Camunda defaults. The modeler re-runs the real
+        // compiler against the chosen pack whenever the selection changes.
+        profiles: AVAILABLE_PROFILES,
+        policies: AVAILABLE_POLICIES,
+        selectedProfile: DEFAULT_PROFILE_ID,
+        selectedPolicy: DEFAULT_POLICY_ID,
         onError: (error) => console.error("[DPG Governance] classification failed:", error),
       },
     );

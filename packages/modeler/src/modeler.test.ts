@@ -170,6 +170,85 @@ describe("DpgReferenceModeler", () => {
     session.destroy();
   });
 
+  it("seeds the selector with the bundled packs and the active selection", async () => {
+    const { container, editor } = mountFresh();
+    const session = startReferenceModeler(editor, container, sampleClassifier, { debounceMs: 0 });
+    await session.reclassify();
+
+    const inspector = container.querySelector("dpg-governance-inspector") as HTMLElement & {
+      profiles: { id: string }[];
+      policies: { id: string }[];
+      selectedProfile: string | null;
+      selectedPolicy: string | null;
+    };
+    // All four reference profiles + both policies populate the dropdowns.
+    expect(inspector.profiles.map((p) => p.id)).toEqual([
+      "camunda-7",
+      "camunda-8",
+      "cib-seven",
+      "operaton",
+    ]);
+    expect(inspector.policies.map((p) => p.id)).toEqual(["baseline-tier-1", "baseline-tier-2"]);
+    // The defaults are reflected as the active selection.
+    expect(inspector.selectedProfile).toBe("camunda-7");
+    expect(inspector.selectedPolicy).toBe("baseline-tier-1");
+
+    session.destroy();
+  });
+
+  it("re-classifies with the new pack id when the profile/policy selector changes", async () => {
+    const { container, editor } = mountFresh();
+    // A spy classifier that records the pack ids each classification ran against.
+    const seen: { profileId?: string; policyId?: string }[] = [];
+    const spy = (xml: string, opts?: { profileId?: string; policyId?: string }) => {
+      seen.push({ profileId: opts?.profileId, policyId: opts?.policyId });
+      return sampleClassifier(xml);
+    };
+    const profileChanges: string[] = [];
+    const policyChanges: string[] = [];
+    const session = startReferenceModeler(editor, container, spy, {
+      debounceMs: 0,
+      selectedProfile: "camunda-7",
+      selectedPolicy: "baseline-tier-1",
+      onProfileChange: (id) => profileChanges.push(id),
+      onPolicyChange: (id) => policyChanges.push(id),
+    });
+    await session.reclassify();
+
+    // The initial classification ran against the seeded defaults.
+    expect(seen.at(-1)).toEqual({ profileId: "camunda-7", policyId: "baseline-tier-1" });
+
+    // The inspector re-dispatches its bubbling, composed profile-change upward.
+    const inspector = container.querySelector("dpg-governance-inspector")!;
+    inspector.dispatchEvent(
+      new CustomEvent("dpg-profile-change", {
+        detail: { id: "camunda-8" },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    await session.reclassify();
+
+    // Changing the profile re-ran the analysis against the new pack id and
+    // notified the host.
+    expect(profileChanges).toEqual(["camunda-8"]);
+    expect(seen.at(-1)).toEqual({ profileId: "camunda-8", policyId: "baseline-tier-1" });
+
+    // A policy change re-runs against the new policy while keeping the profile.
+    inspector.dispatchEvent(
+      new CustomEvent("dpg-policy-change", {
+        detail: { id: "baseline-tier-2" },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    await session.reclassify();
+    expect(policyChanges).toEqual(["baseline-tier-2"]);
+    expect(seen.at(-1)).toEqual({ profileId: "camunda-8", policyId: "baseline-tier-2" });
+
+    session.destroy();
+  });
+
   it("reports classification errors instead of throwing", async () => {
     const { container, editor } = mountFresh();
     const errors: unknown[] = [];

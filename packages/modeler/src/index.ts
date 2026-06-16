@@ -33,13 +33,27 @@
  * ```
  */
 
-export { DpgReferenceModeler, startReferenceModeler, DEFAULT_CHANGE_EVENTS } from "./modeler.js";
+export {
+  DpgReferenceModeler,
+  startReferenceModeler,
+  DEFAULT_CHANGE_EVENTS,
+  DEFAULT_PROFILE_ID,
+  DEFAULT_POLICY_ID,
+} from "./modeler.js";
 export type { ReferenceModelerOptions, ReferenceModelerSession } from "./modeler.js";
 
-export type { Classifier } from "./classify.js";
+export type { Classifier, ClassifyOptions } from "./classify.js";
 
 export { createCompilerClassifier } from "./compilerClassifier.js";
 export type { CompilerClassifierOptions } from "./compilerClassifier.js";
+
+export {
+  AVAILABLE_PROFILES,
+  AVAILABLE_POLICIES,
+  getProfileSnapshot,
+  getPolicySnapshot,
+} from "./packs.js";
+export type { RuntimeProfileSnapshot, PolicySnapshot } from "./packs.js";
 
 export type {
   EditorServices,

@@ -7,8 +7,11 @@
  *
  * This is the shipping classifier for the reference modeler and the Camunda
  * plugin. It exports the editor's BPMN 2.0 XML, hands it to
- * `compileModelInBrowser({ modelId, bpmnXml })`, and returns the real
- * `CompilerResult`. That result is a structural superset of
+ * `compileModelInBrowser({ modelId, bpmnXml, runtimeProfile, policy })` —
+ * resolving the active profile/policy pack ids ({@link ClassifyOptions}) to the
+ * snapshots bundled by {@link ./packs} — and returns the real
+ * `CompilerResult`. Changing the selected pack therefore re-runs the analysis
+ * against it. That result is a structural superset of
  * `@francav/components`' {@link CompilerResultInput} (same
  * `metadata`/`structuralFindings`/`semanticFindings`/`determinismMap`/
  * `runtimeDependencyMap`/`summary`, plus extra fields), so it passes straight to
@@ -28,16 +31,29 @@
 
 import type { CompilerResultInput } from "@francav/components";
 import type { Classifier } from "./classify.js";
+import {
+  getPolicySnapshot,
+  getProfileSnapshot,
+  type PolicySnapshot,
+  type RuntimeProfileSnapshot,
+} from "./packs.js";
 
 /**
  * The slice of `@francav/compiler-browser` we use, typed locally so the build does
- * not need the package present. Mirrors `compileModelInBrowser`'s signature;
- * the real `CompilerResult` it returns is structurally a {@link CompilerResultInput}.
+ * not need the package present. Mirrors `compileModelInBrowser`'s signature.
+ *
+ * The compiler's `CompileOptions` (= `ContextFactoryInput`) also accepts
+ * `runtimeProfile` and `policy` as either a pack id (`string`) or a resolved
+ * snapshot OBJECT. We pass the resolved snapshots (loaded by id from the
+ * bundled packs) so the analysis re-runs against the chosen profile/policy.
+ * The real `CompilerResult` it returns is structurally a {@link CompilerResultInput}.
  */
 interface CompilerBrowserModule {
   compileModelInBrowser(options: {
     modelId: string;
     bpmnXml: string;
+    runtimeProfile?: RuntimeProfileSnapshot;
+    policy?: PolicySnapshot;
   }): Promise<CompilerResultInput>;
 }
 
@@ -102,9 +118,14 @@ async function loadCompiler(): Promise<CompilerBrowserModule> {
  * ```
  */
 export function createCompilerClassifier(options: CompilerClassifierOptions = {}): Classifier {
-  return async (xml: string): Promise<CompilerResultInput> => {
+  return async (xml, opts): Promise<CompilerResultInput> => {
     const modelId = options.modelId ?? deriveModelId(xml);
     const { compileModelInBrowser } = await loadCompiler();
-    return compileModelInBrowser({ modelId, bpmnXml: xml });
+    // Resolve the selected packs to snapshots and forward them so the analysis
+    // re-runs against the chosen profile/policy. Unknown/absent ids resolve to
+    // `undefined`, in which case the compiler applies its own defaults.
+    const runtimeProfile = getProfileSnapshot(opts?.profileId);
+    const policy = getPolicySnapshot(opts?.policyId);
+    return compileModelInBrowser({ modelId, bpmnXml: xml, runtimeProfile, policy });
   };
 }

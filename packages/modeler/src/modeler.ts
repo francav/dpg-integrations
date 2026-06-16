@@ -34,6 +34,12 @@ import type {
 } from "@francav/components";
 import type { Classifier } from "./classify.js";
 import type { DiagramEvent, EditorServices, EventBusService } from "./editor.js";
+import { AVAILABLE_POLICIES, AVAILABLE_PROFILES } from "./packs.js";
+
+/** The pack the selector falls back to when the host seeds no profile. */
+export const DEFAULT_PROFILE_ID = "camunda-7";
+/** The pack the selector falls back to when the host seeds no policy. */
+export const DEFAULT_POLICY_ID = "baseline-tier-1";
 
 /**
  * diagram-js editor events that signify the model changed. bpmn-js fires
@@ -119,30 +125,12 @@ export class DpgReferenceModeler {
     const binding = new DpgCanvasBinding(this.editor);
     const selection = new DpgCanvasSelection(this.editor);
 
-    // The helper owns element registration, the consolidated inspector, the
-    // one-time stylesheet injection, and the single delegated
-    // `dpg-element-select` listener. Panel → canvas: focus the named element
-    // and drill the inspector into it.
-    const panels = mountGovernancePanels(this.container, {
-      layout: "inspector",
-      stylesheet: dpgStylesheet(),
-      profiles: options.profiles,
-      policies: options.policies,
-      selectedProfile: options.selectedProfile,
-      selectedPolicy: options.selectedPolicy,
-      onElementSelect: (id) => {
-        selection.focusElement(id);
-        panels.setSelectedElement(id);
-      },
-      onProfileChange: options.onProfileChange,
-      onPolicyChange: options.onPolicyChange,
-    });
-
-    // Canvas → panel: clicking a shape on the canvas drills the inspector into
-    // that element (or back to the overview when the selection is cleared).
-    const unsubscribeCanvasSelect = selection.onCanvasSelect((id) => {
-      panels.setSelectedElement(id);
-    });
+    // Track the active profile/policy pack ids, seeded from the host options and
+    // defaulting to the camunda-7 / baseline-tier-1 packs. These flow into every
+    // classification so the analysis runs against the selected packs, and the
+    // selector's change events update them and re-classify.
+    let currentProfileId = options.selectedProfile ?? DEFAULT_PROFILE_ID;
+    let currentPolicyId = options.selectedPolicy ?? DEFAULT_POLICY_ID;
 
     let latest: AnalysisResult | null = null;
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -158,7 +146,10 @@ export class DpgReferenceModeler {
       if (destroyed) return;
       try {
         const xml = await exportXml(this.editor);
-        const compilerResult = await this.classify(xml);
+        const compilerResult = await this.classify(xml, {
+          profileId: currentProfileId ?? undefined,
+          policyId: currentPolicyId ?? undefined,
+        });
         if (destroyed) return;
         const diagram = readDiagramIndex(this.editor);
         render(mapCompilerResult(compilerResult, diagram));
@@ -167,6 +158,42 @@ export class DpgReferenceModeler {
         if (!destroyed) options.onError?.(error);
       }
     };
+
+    // The helper owns element registration, the consolidated inspector, the
+    // one-time stylesheet injection, and the single delegated
+    // `dpg-element-select` listener. Panel → canvas: focus the named element
+    // and drill the inspector into it. The profile/policy options default to the
+    // bundled packs and reflect the active selection.
+    const panels = mountGovernancePanels(this.container, {
+      layout: "inspector",
+      stylesheet: dpgStylesheet(),
+      profiles: options.profiles ?? [...AVAILABLE_PROFILES],
+      policies: options.policies ?? [...AVAILABLE_POLICIES],
+      selectedProfile: currentProfileId,
+      selectedPolicy: currentPolicyId,
+      onElementSelect: (id) => {
+        selection.focusElement(id);
+        panels.setSelectedElement(id);
+      },
+      // Selecting a pack updates the tracked id, notifies the host, and re-runs
+      // the analysis against the chosen pack.
+      onProfileChange: (id) => {
+        currentProfileId = id;
+        options.onProfileChange?.(id);
+        void runClassification();
+      },
+      onPolicyChange: (id) => {
+        currentPolicyId = id;
+        options.onPolicyChange?.(id);
+        void runClassification();
+      },
+    });
+
+    // Canvas → panel: clicking a shape on the canvas drills the inspector into
+    // that element (or back to the overview when the selection is cleared).
+    const unsubscribeCanvasSelect = selection.onCanvasSelect((id) => {
+      panels.setSelectedElement(id);
+    });
 
     const onChange = (): void => {
       if (debounceMs <= 0) {

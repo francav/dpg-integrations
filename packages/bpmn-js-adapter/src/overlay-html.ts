@@ -75,9 +75,7 @@ export function dpgStylesheet(): string {
     `stroke: ${AXIS_Y_STYLE[cls].color} !important; stroke-width: 3px !important; }`;
 
   return [
-    ring("fullyDeterministic"),
-    ring("policyDependent"),
-    ring("runtimeBound"),
+    ...(Object.keys(AXIS_Y_STYLE) as AxisYClassification[]).map(ring),
     `.${DPG_CLASS_PREFIX}-axis-x-badge { pointer-events: none; }`,
     `.${DPG_CLASS_PREFIX}-finding-marker { display: inline-flex; align-items: center; justify-content: center;` +
       ` min-width: 14px; height: 14px; padding: 0 3px; border-radius: 7px; color: #fff;` +

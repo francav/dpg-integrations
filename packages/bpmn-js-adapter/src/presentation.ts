@@ -32,6 +32,8 @@ export const AXIS_Y_STYLE: Readonly<Record<AxisYClassification, AxisYStyle>> = {
   fullyDeterministic: { color: "#22c55e", label: "FD", title: "Fully deterministic" },
   policyDependent: { color: "#eab308", label: "PD", title: "Policy dependent" },
   runtimeBound: { color: "#f97316", label: "RB", title: "Runtime bound" },
+  nonDeterministic: { color: "#7f1d1d", label: "ND", title: "Non-deterministic" },
+  unknown: { color: "#6b7280", label: "UN", title: "Unknown" },
 };
 
 export type AxisXBadgeShape = "circle" | "square" | "triangle";

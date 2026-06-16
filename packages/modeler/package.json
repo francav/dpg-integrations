@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@francav/bpmn-js-adapter": "*",
+    "@francav/compiler-browser": "^0.1.1",
     "@francav/components": "git+https://github.com/francav/dpg-components.git#v0.1.1"
   },
   "peerDependencies": {

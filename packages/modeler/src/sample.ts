@@ -90,6 +90,8 @@ interface ScannedElement {
   id: string;
   tag: string;
   external: boolean;
+  /** The element's `name` attribute, if any — used for human-facing messages. */
+  name?: string;
 }
 
 /** Match an opening flow-node element, capturing its tag and `id` attribute. */
@@ -97,6 +99,7 @@ const ELEMENT_RE =
   /<(?:[\w-]+:)?(serviceTask|scriptTask|businessRuleTask|sendTask|exclusiveGateway|inclusiveGateway|parallelGateway)\b([^>]*)>/g;
 
 const ID_RE = /\bid="([^"]+)"/;
+const NAME_RE = /\bname="([^"]+)"/;
 
 function scanProcess(xml: string): { processId: string; nodes: ScannedElement[] } {
   const processMatch = /<(?:[\w-]+:)?process\b([^>]*)>/.exec(xml);
@@ -110,7 +113,8 @@ function scanProcess(xml: string): { processId: string; nodes: ScannedElement[] 
     const id = ID_RE.exec(attrs)?.[1];
     if (!id) continue;
     const external = /:type="external"/.test(attrs) || /\btype="external"/.test(attrs);
-    nodes.push({ id, tag, external });
+    const name = NAME_RE.exec(attrs)?.[1];
+    nodes.push({ id, tag, external, name });
   }
   return { processId, nodes };
 }
@@ -134,7 +138,7 @@ export const sampleClassifier: Classifier = (xml: string): CompilerResultInput =
       id: `finding-contract-${node.id}`,
       category: "semantic" as const,
       severity: "warning" as const,
-      message: `Service task "${node.id}" calls an external system with no recorded contract.`,
+      message: `Service task "${node.name ?? node.id}" calls an external system with no recorded contract.`,
       targetId: node.id,
       policyClause: "baseline-tier-2/contract-coverage",
       ruleId: "contract-coverage",

@@ -16,12 +16,18 @@
   ],
   "scripts": {
     "build": "tsc -b",
+    "build:plugin": "tsc -b && node scripts/build-plugin.mjs",
     "test": "vitest run",
     "lint": "eslint .",
     "format:check": "prettier --check ."
   },
+  "devDependencies": {
+    "camunda-modeler-plugin-helpers": "^5.1.0",
+    "esbuild": "^0.27"
+  },
   "dependencies": {
     "@dpg/bpmn-js-adapter": "*",
-    "@dpg/components": "git+https://github.com/francav/dpg-components.git#v0.1.0"
+    "@dpg/components": "git+https://github.com/francav/dpg-components.git#v0.1.0",
+    "dpg-modeler": "*"
   }
 }

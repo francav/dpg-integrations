@@ -9,6 +9,15 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
+    // Node-side build/tooling scripts (e.g. the Camunda plugin bundler).
+    files: ["**/*.mjs"],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: "module",
+      globals: globals.node,
+    },
+  },
+  {
     files: ["**/*.ts"],
     languageOptions: {
       ecmaVersion: 2022,

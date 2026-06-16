@@ -1,0 +1,33 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+/* Copyright 2026 Victor França */
+
+/*
+ * Layout for the DPG governance overlay panel. The Axis-Y ring / Axis-X badge /
+ * finding marker decorations are styled by the adapter's own stylesheet, which
+ * the live session injects into the document at mount time; this file only
+ * sizes and scrolls the overlay container that hosts the L3 panels.
+ *
+ * The overlay's outer width is set on the <Overlay> (min/maxWidth) so the
+ * 4-column governance matrix and full finding text are not clipped; this
+ * container simply fills that width and scrolls vertically when tall.
+ */
+.dpg-plugin-panel {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-height: 70vh;
+  overflow-y: auto;
+  font-size: 13px;
+  /* Wrap long finding messages instead of letting them clip at the edge. */
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.dpg-plugin-panel dpg-determinism-badge,
+.dpg-plugin-panel dpg-governance-matrix,
+.dpg-plugin-panel dpg-findings-panel {
+  display: block;
+  width: 100%;
+}

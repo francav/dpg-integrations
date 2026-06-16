@@ -41,7 +41,12 @@ interface CompilerBrowserModule {
   }): Promise<CompilerResultInput>;
 }
 
-/** The module specifier loaded dynamically — kept here so it is swappable. */
+/**
+ * The compiler module specifier, used in the not-available error message.
+ * NOTE: the `import()` below MUST use this same string as a literal — bundlers
+ * (esbuild, used by the Camunda plugin) can only resolve/inline a dynamic import
+ * whose specifier is a string literal, not a variable. Keep the two in sync.
+ */
 const COMPILER_MODULE = "@francav/compiler-browser";
 
 export interface CompilerClassifierOptions {
@@ -66,7 +71,8 @@ async function loadCompiler(): Promise<CompilerBrowserModule> {
   if (!compilerPromise) {
     compilerPromise = (async (): Promise<CompilerBrowserModule> => {
       try {
-        const mod = (await import(COMPILER_MODULE)) as Partial<CompilerBrowserModule>;
+        // Literal specifier (not COMPILER_MODULE) so esbuild can inline it.
+        const mod = (await import("@francav/compiler-browser")) as Partial<CompilerBrowserModule>;
         if (typeof mod.compileModelInBrowser !== "function") {
           throw new Error("loaded module does not export compileModelInBrowser");
         }

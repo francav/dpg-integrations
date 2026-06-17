@@ -1,0 +1,22 @@
+{
+  "name": "dpg-visual-harness",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Standalone browser visual harness for manually validating @francav/bpmn-js-adapter and dpg-modeler. Not published.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@francav/bpmn-js-adapter": "*",
+    "@francav/compiler-browser": "^0.1.1",
+    "@francav/components": "^0.1.5",
+    "bpmn-js": "^18",
+    "dpg-modeler": "*"
+  },
+  "devDependencies": {
+    "vite": "^5"
+  }
+}
